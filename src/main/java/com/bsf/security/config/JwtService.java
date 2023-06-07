@@ -20,15 +20,22 @@ import java.util.function.Function;
 public class JwtService {
 
     /**
+     * Chiave privata esadecimale.
      * Il minimo accettato è 256-bit.
      * @see <a href="https://www.allkeysgenerator.com/">Generatore di chiave</a>
      */
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
 
+    /**
+     * Il tempo di scadenza del token.
+     */
     @Value("${application.security.jwt.expiration}")
     private long jwtExpiration;
 
+    /**
+     * Il tempo di scadenza per il token di refresh.
+     */
     @Value("${application.security.jwt.refresh-token.expiration}")
     private long refreshExpiration;
 
