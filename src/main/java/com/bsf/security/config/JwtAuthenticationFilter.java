@@ -6,7 +6,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -17,6 +21,8 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+
+    private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -31,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Variabile per il token JWT
         final String jwt;
 
-        // Variabile per la email all'interno del token
+        // Variabile per la email (username) all'interno del token
         final String userEmail;
 
         // Se header recuperato è null o non inizia con la parola chiave "Bearer ", chiudo la richiesta
@@ -46,9 +52,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Tramite una classe di supporto estraggo lo username dal token
         userEmail = jwtService.extractUsername(jwt);
 
+        // Controllo che lo username non sia null e controllo nel contesto di sicurezza di spring che
+        // l'utente non sia già autenticato
         if(userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
+            // Recupero l'utente dal database in base allo username
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+
+            // Controllo che il token inviato sia valido
+            if(jwtService.isValidToken(jwt, userDetails)) {
+
+                // Creo l'oggetto per il token dell'autenticazione di spring
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+
+                // Aggiungo dettagli al token
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                // Faccio un update del SecurityContextHolder
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+
         }
+
+        // Viene elaborata la richiesta una volta processata
+        filterChain.doFilter(request, response);
     }
 
 }
