@@ -1,10 +1,10 @@
 package com.bsf.security.config;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@Slf4j
 public class JwtService {
 
     /**
@@ -103,6 +104,7 @@ public class JwtService {
     public String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
         return Jwts
                 .builder()
+                .setHeaderParam("typ", "JWT")
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
@@ -153,12 +155,27 @@ public class JwtService {
      * @return claims del token.
      */
     private Claims extractAllClaims(String token) {
-        return Jwts
-                .parserBuilder()
-                .setSigningKey(getSignInKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts
+                    .parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException ex) {
+            log.error("JWT expired -> {}", ex.getMessage());
+        } catch (IllegalArgumentException ex) {
+            log.error("Token is null, empty or only whitespace -> {}", ex.getMessage());
+        } catch (MalformedJwtException ex) {
+            log.error("JWT is invalid -> {}", ex.getMessage());
+        } catch (UnsupportedJwtException ex) {
+            log.error("JWT is not supported -> {}", ex.getMessage());
+        } catch (SignatureException ex) {
+            log.error("Signature validation failed -> {}", ex.getMessage());
+        }
+
+        // TODO: Questo genera NullPointerException, gestisci le eccezioni.
+        return null;
     }
 
     /**

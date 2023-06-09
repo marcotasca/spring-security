@@ -1,11 +1,13 @@
 package com.bsf.security.config;
 
+import com.bsf.security.token.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +26,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
 
+    private final TokenRepository tokenRepository;
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -32,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         // Recupero il token dal header della richiesta
-        final String authHeader = request.getHeader("Authorization");
+        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         // Variabile per il token JWT
         final String jwt;
@@ -59,8 +63,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Recupero l'utente dal database in base allo username
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
+            // Controllo che il token non sia scaduto o revocato
+            var isValidToken = tokenRepository.findByToken(jwt)
+                    .map(t -> !t.isExpired() && !t.isRevoked())
+                    .orElse(false);
+
             // Controllo che il token inviato sia valido
-            if(jwtService.isValidToken(jwt, userDetails)) {
+            if(jwtService.isValidToken(jwt, userDetails) && isValidToken) {
 
                 // Creo l'oggetto per il token dell'autenticazione di spring
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
