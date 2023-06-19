@@ -37,4 +37,6 @@ public class AuthenticationController {
         authenticationService.refreshToken(request, response);
     }
 
+    // TODO: Crea un endpoint verify-email per verificare l'email inviata per email
+
 }

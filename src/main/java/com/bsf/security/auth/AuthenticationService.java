@@ -80,6 +80,8 @@ public class AuthenticationService {
                 .orElseThrow();
 
         // Creo un token con i dati dell'utente creato
+        // TODO: Rendilo disponibile per tutti, la firma di generateToken dovrà avere lo User e non UserDetails
+        // TODO: iss prendilo come nome da application.yml, non portare first e last name, crea un path per l'utente
         HashMap<String, Object> extraClaims = new HashMap<>() {{
             put("iss", "Biotekna Plus");
             put("given_name", user.getFirstname());
@@ -175,6 +177,7 @@ public class AuthenticationService {
                 // Creo la risposta da inviare
                 var authResponse = AuthenticationResponse.builder()
                         .accessToken(accessToken)
+                        // TODO: Crea un nuovo refresh token perché usa sempre lo stesso
                         .refreshToken(refreshToken)
                         .build();
 
