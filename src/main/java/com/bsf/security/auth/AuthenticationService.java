@@ -4,7 +4,6 @@ import com.bsf.security.config.JwtService;
 import com.bsf.security.token.Token;
 import com.bsf.security.token.TokenRepository;
 import com.bsf.security.token.TokenType;
-import com.bsf.security.user.Role;
 import com.bsf.security.user.User;
 import com.bsf.security.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
