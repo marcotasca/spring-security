@@ -19,11 +19,6 @@ public enum Role {
                     Permission.ADMIN_UPDATE,
                     Permission.ADMIN_DELETE
             )
-    ),
-    ADMIN_V2(
-            Set.of(
-                    Permission.ADMIN_READ
-            )
     );
 
     @Getter

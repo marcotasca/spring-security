@@ -30,13 +30,13 @@ public class SecurityApplication {
 			System.out.println("Admin token: " + service.register(admin).getAccessToken());
 
 			var manager = RegisterRequest.builder()
-					.firstname("Admin_V2")
-					.lastname("Admin")
-					.email("admin_v2@mail.com")
+					.firstname("User")
+					.lastname("User")
+					.email("user@mail.com")
 					.password("password")
-					.role(Role.ADMIN_V2)
+					.role(Role.USER)
 					.build();
-			System.out.println("Admin V2 token: " + service.register(manager).getAccessToken());
+			System.out.println("User token: " + service.register(manager).getAccessToken());
 
 		};
 	}

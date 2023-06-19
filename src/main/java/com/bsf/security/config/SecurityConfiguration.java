@@ -40,7 +40,7 @@ public class SecurityConfiguration {
                         .permitAll()
 
                         // Imposto la sicurezza per i path
-                        .requestMatchers("/api/v1/admin/**").hasAnyRole(Role.ADMIN.name(), Role.ADMIN_V2.name())
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/api/v1/admin/**").hasAuthority(Permission.ADMIN_READ.name())
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/**").hasAuthority(Permission.ADMIN_CREATE.name())
 
