@@ -1,4 +1,4 @@
-package com.bsf.security.config;
+package com.bsf.security.sec.config;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -143,7 +143,7 @@ public class JwtService {
      * @param token è la stringa di autorizzazione nel header.
      * @return la data di scadenza del token.
      */
-    private Date extractExpiration(String token) {
+    public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 

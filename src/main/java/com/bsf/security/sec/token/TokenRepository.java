@@ -1,4 +1,4 @@
-package com.bsf.security.token;
+package com.bsf.security.sec.token;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,12 +11,11 @@ public interface TokenRepository extends JpaRepository<Token, Integer> {
     @Query(value = """
         select t\s
         from Token t\s
-        inner join User u\s
-        on t.user.id = u.id\s
-        where u.id = :id and (t.expired = false or t.revoked = false)\s
+        inner join Account a on t.account.id = a.id\s
+        where a.id = :id\s
     """)
     List<Token> findAllValidTokenByUser(Integer id);
 
-    Optional<Token> findByToken(String token);
+    Optional<Token> findByAccessToken(String accessToken);
 
 }

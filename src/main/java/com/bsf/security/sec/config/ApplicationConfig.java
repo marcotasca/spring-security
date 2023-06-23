@@ -1,6 +1,6 @@
-package com.bsf.security.config;
+package com.bsf.security.sec.config;
 
-import com.bsf.security.user.UserRepository;
+import com.bsf.security.sec.account.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @RequiredArgsConstructor
 public class ApplicationConfig {
 
-    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
 
     /**
      * Si occupa di cercare lo username nel database in base al nome utente.
@@ -26,7 +26,7 @@ public class ApplicationConfig {
      */
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByEmail(username)
+        return username -> accountRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 

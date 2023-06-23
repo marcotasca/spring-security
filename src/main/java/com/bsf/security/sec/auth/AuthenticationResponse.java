@@ -1,4 +1,4 @@
-package com.bsf.security.auth;
+package com.bsf.security.sec.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

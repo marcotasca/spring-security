@@ -1,7 +1,7 @@
-package com.bsf.security.config;
+package com.bsf.security.sec.config;
 
-import com.bsf.security.user.Permission;
-import com.bsf.security.user.Role;
+import com.bsf.security.sec.account.PermissionEnum;
+import com.bsf.security.sec.account.RoleEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,9 +40,9 @@ public class SecurityConfiguration {
                         .permitAll()
 
                         // Imposto la sicurezza per i path
-                        .requestMatchers("/api/v1/admin/**").hasAnyRole(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/**").hasAuthority(Permission.ADMIN_READ.name())
-                        .requestMatchers(HttpMethod.POST, "/api/v1/admin/**").hasAuthority(Permission.ADMIN_CREATE.name())
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole(RoleEnum.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/**").hasAuthority(PermissionEnum.ADMIN_READ.name())
+                        .requestMatchers(HttpMethod.POST, "/api/v1/admin/**").hasAuthority(PermissionEnum.ADMIN_CREATE.name())
 
                         // Per tutti gli altri url bisogna essere autenticati
                         .anyRequest()

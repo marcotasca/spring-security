@@ -1,6 +1,6 @@
-package com.bsf.security.config;
+package com.bsf.security.sec.config;
 
-import com.bsf.security.token.TokenRepository;
+import com.bsf.security.sec.token.TokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +31,13 @@ public class LogoutService implements LogoutHandler {
         jwt = authHeader.substring(7);
 
         // Recupero il token salvato
-        var storedToken = tokenRepository.findByToken(jwt).orElse(null);
+        var storedToken = tokenRepository.findByAccessToken(jwt).orElse(null);
 
         // Se il token non è null lo disabilito e pulisco il contesto di spring
         if(storedToken != null) {
-            storedToken.setExpired(true);
-            storedToken.setRevoked(true);
+            // TODO: Elimina il token
+//            storedToken.setExpired(true);
+//            storedToken.setRevoked(true);
             tokenRepository.save(storedToken);
             SecurityContextHolder.clearContext();
         }

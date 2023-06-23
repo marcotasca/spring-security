@@ -1,8 +1,6 @@
 package com.bsf.security;
 
-import com.bsf.security.auth.AuthenticationService;
-import com.bsf.security.auth.RegisterRequest;
-import com.bsf.security.user.Role;
+import com.bsf.security.sec.auth.AuthenticationService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,23 +18,24 @@ public class SecurityApplication {
 			AuthenticationService service
 	) {
 		return args -> {
-			var admin = RegisterRequest.builder()
-					.firstname("Admin")
-					.lastname("Admin")
-					.email("admin@mail.com")
-					.password("password")
-					.role(Role.ADMIN)
-					.build();
-			System.out.println("Admin token: " + service.register(admin).getAccessToken());
-
-			var manager = RegisterRequest.builder()
-					.firstname("User")
-					.lastname("User")
-					.email("user@mail.com")
-					.password("password")
-					.role(Role.USER)
-					.build();
-			System.out.println("User token: " + service.register(manager).getAccessToken());
+//			var admin = RegisterRequest.builder()
+//					.firstname("Admin")
+//					.lastname("Admin")
+//					.email("admin@mail.com")
+//					.password("password")
+//					.role(new Role(1))
+//					.build();
+//			System.out.println("Admin token: " + service.register(admin).getAccessToken());
+//
+//			var manager = RegisterRequest.builder()
+//					.role(new Role(2))
+//					.firstname("User")
+//					.lastname("User")
+//					.email("user@mail.com")
+//					.password("password")
+//					.build();
+//
+//			System.out.println("User token: " + service.register(manager).getAccessToken());
 
 		};
 	}

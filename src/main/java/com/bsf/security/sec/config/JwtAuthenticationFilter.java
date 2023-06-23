@@ -1,6 +1,7 @@
-package com.bsf.security.config;
+package com.bsf.security.sec.config;
 
-import com.bsf.security.token.TokenRepository;
+import com.bsf.security.sec.token.Token;
+import com.bsf.security.sec.token.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -64,12 +66,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
             // Controllo che il token non sia scaduto o revocato
-            var isValidToken = tokenRepository.findByToken(jwt)
-                    .map(t -> !t.isExpired() && !t.isRevoked())
+            Optional<Token> accessToken = tokenRepository.findByAccessToken(jwt);
+            System.out.println(accessToken.get().getAccessToken());
+            var isValidToken = accessToken
+                    .map(t -> !t.isExpired())
                     .orElse(false);
 
+            System.out.println(userDetails.getAuthorities());
+            System.out.println(isValidToken);
+
+            boolean isVldToken = jwtService.isValidToken(jwt, userDetails);
+            System.out.println(isVldToken);
+
             // Controllo che il token inviato sia valido
-            if(jwtService.isValidToken(jwt, userDetails) && isValidToken) {
+            if(isVldToken && isValidToken) {
+
+                System.out.println("entra");
 
                 // Creo l'oggetto per il token dell'autenticazione di spring
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

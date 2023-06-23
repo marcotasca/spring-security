@@ -1,11 +1,10 @@
-package com.bsf.security.auth;
+package com.bsf.security.sec.auth;
 
-import com.bsf.security.config.JwtService;
-import com.bsf.security.token.Token;
-import com.bsf.security.token.TokenRepository;
-import com.bsf.security.token.TokenType;
-import com.bsf.security.user.User;
-import com.bsf.security.user.UserRepository;
+import com.bsf.security.sec.config.JwtService;
+import com.bsf.security.sec.account.Account;
+import com.bsf.security.sec.token.*;
+import com.bsf.security.sec.account.AccountStatus;
+import com.bsf.security.sec.account.AccountRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,13 +16,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -33,39 +34,42 @@ public class AuthenticationService {
 
     private final TokenRepository tokenRepository;
 
-    public AuthenticationResponse register(RegisterRequest request) {
+    public AuthenticationResponse register(RegisterRequest request, HttpServletRequest httpRequest) {
         // Creo l'utente con ruolo di USER impostando tutti i campi necessari
-        var user = User
+        var user = Account
                 .builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
+                .createdAt(LocalDateTime.now())
+                .status(new AccountStatus(1))
                 .build();
 
         // Salvo l'utente appena creato
-        var savedUser = userRepository.save(user);
+        var savedUser = accountRepository.save(user);
 
         // Creo un token con i dati dell'utente creato
-        var jwtToken = jwtService.generateToken(user);
+        var accessToken = jwtService.generateToken(user);
 
         // Creo il token di refresh
         var refreshToken = jwtService.generateRefreshToken(user);
 
         // Salva il token dell'utente
-        saveUserToken(savedUser, jwtToken);
+        String ipAddress = httpRequest.getRemoteAddr();
+        saveUserToken(savedUser, accessToken, refreshToken, ipAddress);
 
         // Ritorno il token appena generato
         return AuthenticationResponse
                 .builder()
-                .accessToken(jwtToken)
+                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
     }
 
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    public AuthenticationResponse authenticate(AuthenticationRequest request, HttpServletRequest httpRequest) {
         // Se non corretto AuthenticationManager si occupa già di sollevare eccezioni
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -75,7 +79,7 @@ public class AuthenticationService {
         );
 
         // Se arrivato a questo punto significa che l'utente è corretto quindi recuperiamolo
-        var user = userRepository.findByEmail(request.getEmail())
+        var user = accountRepository.findByEmail(request.getEmail())
                 .orElseThrow();
 
         // Creo un token con i dati dell'utente creato
@@ -85,9 +89,9 @@ public class AuthenticationService {
             put("iss", "Biotekna Plus");
             put("given_name", user.getFirstname());
             put("family_name", user.getLastname());
-            put("roles", user.getRole());
+            put("roles", user.getAuthorities());
         }};
-        var jwtToken = jwtService.generateToken(extraClaims, user);
+        var accessToken = jwtService.generateToken(extraClaims, user);
 
         // Creo il token di refresh
         var refreshToken = jwtService.generateRefreshToken(user);
@@ -96,42 +100,50 @@ public class AuthenticationService {
         revokeAllUserTokens(user);
 
         // Salva il token dell'utente
-        saveUserToken(user, jwtToken);
+        String ipAddress = httpRequest.getRemoteAddr();
+        saveUserToken(user, accessToken, refreshToken, ipAddress);
 
         // Ritorno il token appena generato
         return AuthenticationResponse
                 .builder()
-                .accessToken(jwtToken)
+                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
     }
 
-    public void saveUserToken(User user, String jwtToken) {
+    public void saveUserToken(Account account, String accessToken, String refreshToken, String ipAddress) {
+        Date accessTokenExpiration = jwtService.extractExpiration(accessToken);
+        Date refreshTokenExpiration = jwtService.extractExpiration(refreshToken);
+
         // Creo il token per l'utente
         var token = Token
                 .builder()
-                .user(user)
-                .token(jwtToken)
-                .tokenType(TokenType.BEARER)
-                .expired(false)
-                .revoked(false)
+                .account(account)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType(new TokenType(TokenTypeEnum.BEARER.getTokenTypeId()))
+                .accessTokenExpiration(accessTokenExpiration)
+                .refreshTokenExpiration(refreshTokenExpiration)
+                .tokenScopeCategory(new TokenScopeCategory(TokenScopeCategoryEnum.BTD_REGISTRATION.getTokenScopeCategoryId()))
+                .ipAddress(ipAddress)
                 .build();
 
         // Salvo il token per l'utente
         tokenRepository.save(token);
     }
 
-    private void revokeAllUserTokens(User user) {
+    private void revokeAllUserTokens(Account account) {
         // Recupero tutti i token validi dello user
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+        var validUserTokens = tokenRepository.findAllValidTokenByUser(account.getId());
 
         // Se non ce ne sono esco dalla funzione
         if(validUserTokens.isEmpty()) return;
 
         // Revoco ogni token dell'utente
         validUserTokens.forEach(token -> {
-            token.setExpired(true);
-            token.setRevoked(true);
+            // TODO: delete token
+//            token.setExpired(true);
+//            token.setRevoked(true);
         });
 
         // Salvo  i token
@@ -161,7 +173,7 @@ public class AuthenticationService {
         if(userEmail != null) {
 
             // Recupero l'utente dal database
-            var user = this.userRepository.findByEmail(userEmail).orElseThrow();
+            var user = this.accountRepository.findByEmail(userEmail).orElseThrow();
 
             if(jwtService.isValidToken(refreshToken, user)) {
                 // Genero il token di accesso
@@ -171,7 +183,8 @@ public class AuthenticationService {
                 revokeAllUserTokens(user);
 
                 // Salvo il token dell'utente
-                saveUserToken(user, accessToken);
+                String ipAddress = request.getRemoteAddr();
+                saveUserToken(user, accessToken, refreshToken, ipAddress);
 
                 // Creo la risposta da inviare
                 var authResponse = AuthenticationResponse.builder()
