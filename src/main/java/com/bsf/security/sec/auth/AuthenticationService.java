@@ -34,7 +34,14 @@ public class AuthenticationService {
 
     private final TokenRepository tokenRepository;
 
-    public AuthenticationResponse register(RegisterRequest request, HttpServletRequest httpRequest) {
+    public AuthenticationResponse register(RegisterRequest request, String ipAddress) {
+        // TODO: Controllo che non ci sia già l'utente
+        var duplicateUser = accountRepository.findByEmail(request.getEmail());
+        if(duplicateUser.isPresent()) return null;
+
+        // TODO: Controllo la password se soddisfa i requisiti
+
+        // TODO: Imposta il ruolo fisso USER
         // Creo l'utente con ruolo di USER impostando tutti i campi necessari
         var user = Account
                 .builder()
@@ -57,8 +64,7 @@ public class AuthenticationService {
         var refreshToken = jwtService.generateRefreshToken(user);
 
         // Salva il token dell'utente
-        String ipAddress = httpRequest.getRemoteAddr();
-        saveUserToken(savedUser, accessToken, refreshToken, ipAddress);
+        saveUserToken(savedUser, accessToken, refreshToken, ipAddress, TokenTypeEnum.BEARER, TokenScopeCategoryEnum.BTD_REGISTRATION);
 
         // Ritorno il token appena generato
         return AuthenticationResponse
@@ -69,7 +75,7 @@ public class AuthenticationService {
     }
 
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request, HttpServletRequest httpRequest) {
+    public AuthenticationResponse authenticate(AuthenticationRequest request, String ipAddress) {
         // Se non corretto AuthenticationManager si occupa già di sollevare eccezioni
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -100,8 +106,7 @@ public class AuthenticationService {
         revokeAllUserTokens(user);
 
         // Salva il token dell'utente
-        String ipAddress = httpRequest.getRemoteAddr();
-        saveUserToken(user, accessToken, refreshToken, ipAddress);
+        saveUserToken(user, accessToken, refreshToken, ipAddress, TokenTypeEnum.BEARER, TokenScopeCategoryEnum.BTD_RW);
 
         // Ritorno il token appena generato
         return AuthenticationResponse
@@ -111,7 +116,15 @@ public class AuthenticationService {
                 .build();
     }
 
-    public void saveUserToken(Account account, String accessToken, String refreshToken, String ipAddress) {
+    public void saveUserToken(
+            Account account,
+            String accessToken,
+            String refreshToken,
+            String ipAddress,
+            TokenTypeEnum tokenType,
+            TokenScopeCategoryEnum tokenScopeCategoryEnum
+    ) {
+        // Estraggo le date di scadenza
         Date accessTokenExpiration = jwtService.extractExpiration(accessToken);
         Date refreshTokenExpiration = jwtService.extractExpiration(refreshToken);
 
@@ -121,10 +134,10 @@ public class AuthenticationService {
                 .account(account)
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .tokenType(new TokenType(TokenTypeEnum.BEARER.getTokenTypeId()))
+                .tokenType(new TokenType(tokenType.getTokenTypeId()))
                 .accessTokenExpiration(accessTokenExpiration)
                 .refreshTokenExpiration(refreshTokenExpiration)
-                .tokenScopeCategory(new TokenScopeCategory(TokenScopeCategoryEnum.BTD_REGISTRATION.getTokenScopeCategoryId()))
+                .tokenScopeCategory(new TokenScopeCategory(tokenScopeCategoryEnum.getTokenScopeCategoryId()))
                 .ipAddress(ipAddress)
                 .build();
 
@@ -166,7 +179,7 @@ public class AuthenticationService {
         // Recupero il token alla settima posizione che è la lunghezza della parola chiave "Bearer "
         refreshToken = authHeader.substring(7);
 
-        // Tramite una classe di supporto estraggo lo username dal token
+        // Estraggo lo username dal token
         userEmail = jwtService.extractUsername(refreshToken);
 
         // Se lo username non è nullo
@@ -179,18 +192,20 @@ public class AuthenticationService {
                 // Genero il token di accesso
                 var accessToken = jwtService.generateToken(user);
 
+                // Genero il token di refresh
+                var currentRefreshToken = jwtService.generateRefreshToken(user);
+
                 // Revoco tutti i token dell'utente
                 revokeAllUserTokens(user);
 
                 // Salvo il token dell'utente
                 String ipAddress = request.getRemoteAddr();
-                saveUserToken(user, accessToken, refreshToken, ipAddress);
+                saveUserToken(user, accessToken, currentRefreshToken, ipAddress, TokenTypeEnum.BEARER, TokenScopeCategoryEnum.BTD_RW);
 
                 // Creo la risposta da inviare
                 var authResponse = AuthenticationResponse.builder()
                         .accessToken(accessToken)
-                        // TODO: Crea un nuovo refresh token perché usa sempre lo stesso
-                        .refreshToken(refreshToken)
+                        .refreshToken(currentRefreshToken)
                         .build();
 
                 // Scrivo dentro lo stream di HttpServletResponse la risposta appena generata

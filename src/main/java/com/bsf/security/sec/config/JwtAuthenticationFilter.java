@@ -72,16 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .map(t -> !t.isExpired())
                     .orElse(false);
 
-            System.out.println(userDetails.getAuthorities());
-            System.out.println(isValidToken);
-
-            boolean isVldToken = jwtService.isValidToken(jwt, userDetails);
-            System.out.println(isVldToken);
-
             // Controllo che il token inviato sia valido
-            if(isVldToken && isValidToken) {
-
-                System.out.println("entra");
+            if(jwtService.isValidToken(jwt, userDetails) && isValidToken) {
 
                 // Creo l'oggetto per il token dell'autenticazione di spring
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

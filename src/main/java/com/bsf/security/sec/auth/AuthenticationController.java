@@ -22,14 +22,16 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> register(
             @RequestBody RegisterRequest request, HttpServletRequest httpRequest
     ) {
-        return ResponseEntity.ok(authenticationService.register(request, httpRequest));
+        String ipAddress = httpRequest.getRemoteAddr();
+        return ResponseEntity.ok(authenticationService.register(request, ipAddress));
     }
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> register(
             @RequestBody AuthenticationRequest request, HttpServletRequest httpRequest
     ) {
-        return ResponseEntity.ok(authenticationService.authenticate(request, httpRequest));
+        String ipAddress = httpRequest.getRemoteAddr();
+        return ResponseEntity.ok(authenticationService.authenticate(request, ipAddress));
     }
 
     @PostMapping("/refresh-token")
