@@ -22,6 +22,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.1.4'
 	compileOnly 'org.projectlombok:lombok:1.18.28'
@@ -32,6 +33,7 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+	implementation 'org.passay:passay:1.6.3'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'

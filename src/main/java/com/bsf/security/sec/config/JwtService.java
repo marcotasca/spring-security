@@ -163,7 +163,7 @@ public class JwtService {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException ex) {
-            log.error("JWT expired -> {}", ex.getMessage());
+            log.error("JWT expired -> {}", ex.getClaims().getSubject());
         } catch (IllegalArgumentException ex) {
             log.error("Token is null, empty or only whitespace -> {}", ex.getMessage());
         } catch (MalformedJwtException ex) {

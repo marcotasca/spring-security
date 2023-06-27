@@ -1,10 +1,13 @@
 package com.bsf.security.sec.auth;
 
+import com.bsf.security.exception._common.BTExceptionName;
+import com.bsf.security.exception.account.DuplicateAccountException;
 import com.bsf.security.sec.config.JwtService;
 import com.bsf.security.sec.account.Account;
 import com.bsf.security.sec.token.*;
 import com.bsf.security.sec.account.AccountStatus;
 import com.bsf.security.sec.account.AccountRepository;
+import com.bsf.security.validation.password.PasswordConstraintValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,10 +39,12 @@ public class AuthenticationService {
 
     public AuthenticationResponse register(RegisterRequest request, String ipAddress) {
         // TODO: Controllo che non ci sia già l'utente
-        var duplicateUser = accountRepository.findByEmail(request.getEmail());
-        if(duplicateUser.isPresent()) return null;
+        var duplicateAccount = accountRepository.findByEmail(request.getEmail());
+        if(duplicateAccount.isPresent())
+            throw new DuplicateAccountException(BTExceptionName.AUTH_REGISTRATION_DUPLICATE_USERNAME_ACCOUNT.name());
 
         // TODO: Controllo la password se soddisfa i requisiti
+        PasswordConstraintValidator.isValid(request.getPassword());
 
         // TODO: Imposta il ruolo fisso USER
         // Creo l'utente con ruolo di USER impostando tutti i campi necessari
