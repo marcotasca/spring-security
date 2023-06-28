@@ -1,5 +1,6 @@
 package com.bsf.security.sec.config;
 
+import com.bsf.security.exception.security.jwt.SecurityJWTException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -163,7 +164,7 @@ public class JwtService {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException ex) {
-            log.error("JWT expired -> {}", ex.getClaims().getSubject());
+            throw new Error(ex);
         } catch (IllegalArgumentException ex) {
             log.error("Token is null, empty or only whitespace -> {}", ex.getMessage());
         } catch (MalformedJwtException ex) {

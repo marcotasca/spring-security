@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +45,7 @@ public class AuthenticationService {
             throw new DuplicateAccountException(BTExceptionName.AUTH_REGISTRATION_DUPLICATE_USERNAME_ACCOUNT.name());
 
         // TODO: Controllo la password se soddisfa i requisiti
-        PasswordConstraintValidator.isValid(request.getPassword());
+        PasswordConstraintValidator.isValid(request.getPassword(), Locale.ITALIAN);
 
         // TODO: Imposta il ruolo fisso USER
         // Creo l'utente con ruolo di USER impostando tutti i campi necessari

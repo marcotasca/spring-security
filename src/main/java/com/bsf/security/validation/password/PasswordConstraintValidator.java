@@ -1,18 +1,14 @@
 package com.bsf.security.validation.password;
 
-import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
-import jakarta.validation.ConstraintValidator;
-import jakarta.validation.ConstraintValidatorContext;
+import com.bsf.security.exception.account.InvalidPasswordAccountException;
+import com.bsf.security.exception.account.InvalidPasswordAccountListException;
 import org.passay.*;
 
 public class PasswordConstraintValidator {
 
-    public static void isValid(final String password) {
+    public static void isValid(String password, Locale locale) {
         List<Rule> rules = new ArrayList<>();
         rules.add(new LengthRule(8, 16));
         rules.add(new WhitespaceRule());
@@ -21,17 +17,20 @@ public class PasswordConstraintValidator {
         rules.add(new CharacterRule(EnglishCharacterData.Digit, 1));
         rules.add(new CharacterRule(EnglishCharacterData.Special, 1));
 
-//        Properties props = new Properties();
-//        props.load(new FileInputStream("E:/Test/messages.properties"));
-//        MessageResolver resolver = new PropertiesMessageResolver(props);
-
         PasswordValidator validator = new PasswordValidator(rules);
         RuleResult result = validator.validate(new PasswordData(password));
-        if(result.isValid()){
-            System.out.println("Password validated.");
-        }else{
-            System.out.println("Invalid Password: " + validator.getMessages(result));
-        }
+
+        List<InvalidPasswordAccountException> exceptions = new ArrayList<>();
+        result.getDetails().forEach(ruleResultDetail -> {
+            exceptions.add(
+                    new InvalidPasswordAccountException(
+                            ruleResultDetail.getErrorCode(),
+                            ruleResultDetail.getValues()
+                    )
+            );
+        });
+
+        if(!result.isValid()) throw new InvalidPasswordAccountListException(exceptions);
     }
 
 }

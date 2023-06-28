@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class BTExceptionResponse {
 

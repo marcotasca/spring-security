@@ -1,6 +1,4 @@
 spring:
-  messages:
-    basename: lang/messages
   datasource:
     url: jdbc:mariadb://localhost:3306/btdoctor
     username: root
@@ -14,7 +12,7 @@ spring:
       hibernate:
         format_sql: true
     database: mysql
-    database-platform: org.hibernate.dialect.MariaDB103Dialect
+    database-platform: org.hibernate.dialect.MariaDBDialect
 
 application:
   security:

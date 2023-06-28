@@ -28,6 +28,7 @@ public class AccountController {
 
     @GetMapping
     public ResponseEntity<AccountDto> getAccountInfo(Authentication authentication) {
+        if(authentication != null) System.out.println(20/0);
         Account account = accountRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
         return ResponseEntity.ok(mapStruct.accountToAccountDto(account));

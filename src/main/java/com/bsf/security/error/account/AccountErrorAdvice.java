@@ -1,31 +1,35 @@
 package com.bsf.security.error.account;
 
+import com.bsf.security.exception._common.BTExceptionResolver;
 import com.bsf.security.exception._common.BTExceptionResponse;
 import com.bsf.security.exception.account.DuplicateAccountException;
+import com.bsf.security.exception.account.InvalidPasswordAccountListException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.util.List;
 import java.util.Locale;
 
 @RequiredArgsConstructor
 @ControllerAdvice
-public class AccountAdvice {
+public class AccountErrorAdvice {
 
-    private final MessageSource messageSource;
+    private final BTExceptionResolver btExceptionResolver;
 
-    @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler({DuplicateAccountException.class})
     public ResponseEntity<BTExceptionResponse> handleDuplicateAccountException(DuplicateAccountException ex, Locale locale) {
-        String errorMessage = messageSource.getMessage(ex.getMessage(), ex.getArgs(), locale);
-        return new ResponseEntity<>(
-                new BTExceptionResponse(errorMessage, HttpStatus.CONFLICT),
-                HttpStatus.CONFLICT
-        );
+        return btExceptionResolver.resolveBusinessBTException(ex, locale, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler({InvalidPasswordAccountListException.class})
+    public ResponseEntity<List<BTExceptionResponse>> handleInvalidPasswordAccountException(InvalidPasswordAccountListException ex, Locale locale) {
+        return btExceptionResolver.resolvePasswordValidationBTException(ex, locale, HttpStatus.BAD_REQUEST);
     }
 
 }
