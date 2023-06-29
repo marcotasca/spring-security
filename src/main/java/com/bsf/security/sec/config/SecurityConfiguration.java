@@ -31,6 +31,8 @@ public class SecurityConfiguration {
 
     private final LogoutHandler logoutHandler;
 
+    private final JWTAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
@@ -63,7 +65,7 @@ public class SecurityConfiguration {
                 )
                 // Imposto come valore di status il 401 quando fallisce l'autenticazione
                 .exceptionHandling(httpSecurityExceptionHandlingConfigurer ->
-                        httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                        httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 );
 
 

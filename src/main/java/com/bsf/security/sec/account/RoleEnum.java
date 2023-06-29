@@ -7,8 +7,8 @@ import java.util.Set;
 
 @RequiredArgsConstructor
 public enum RoleEnum {
-    USER(Collections.emptySet()),
-    ADMIN(
+    USER(1, Collections.emptySet()),
+    ADMIN(2,
             Set.of(
                     PermissionEnum.ADMIN_READ,
                     PermissionEnum.ADMIN_CREATE,
@@ -16,6 +16,9 @@ public enum RoleEnum {
                     PermissionEnum.ADMIN_DELETE
             )
     );
+
+    @Getter
+    private final int roleId;
 
     @Getter
     private final Set<PermissionEnum> permissionEnums;

@@ -3,6 +3,7 @@ package com.bsf.security.exception._common;
 import com.bsf.security.exception.account.InvalidPasswordAccountException;
 import com.bsf.security.exception.account.InvalidPasswordAccountListException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BTExceptionResolver {
@@ -32,11 +34,8 @@ public class BTExceptionResolver {
         return new ResponseEntity<>(new BTExceptionResponse(errorMessage, httpStatus), httpStatus);
     }
 
-    public ResponseEntity<BTExceptionResponse> resolveAuthBTException(
-            BTException ex, Locale locale, HttpStatus httpStatus
-    ) {
-        String errorMessage = authenticationMessageSource.getMessage(ex.getMessage(), ex.getArgs(), locale);
-        return new ResponseEntity<>(new BTExceptionResponse(errorMessage, httpStatus), httpStatus);
+    public void resolveAuthBTException(String type, Exception ex, String token) {
+        log.error("\n[{}] -> {}\nToken: {}", type, ex.getMessage(), token);
     }
 
     public ResponseEntity<BTExceptionResponse> resolveBusinessBTException(

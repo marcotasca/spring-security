@@ -8,7 +8,7 @@ import org.passay.*;
 
 public class PasswordConstraintValidator {
 
-    public static void isValid(String password, Locale locale) {
+    public static void isValid(String password) {
         List<Rule> rules = new ArrayList<>();
         rules.add(new LengthRule(8, 16));
         rules.add(new WhitespaceRule());

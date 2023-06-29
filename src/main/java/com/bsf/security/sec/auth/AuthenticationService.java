@@ -2,11 +2,10 @@ package com.bsf.security.sec.auth;
 
 import com.bsf.security.exception._common.BTExceptionName;
 import com.bsf.security.exception.account.DuplicateAccountException;
+import com.bsf.security.exception.account.PasswordsDoNotMatchException;
+import com.bsf.security.sec.account.*;
 import com.bsf.security.sec.config.JwtService;
-import com.bsf.security.sec.account.Account;
 import com.bsf.security.sec.token.*;
-import com.bsf.security.sec.account.AccountStatus;
-import com.bsf.security.sec.account.AccountRepository;
 import com.bsf.security.validation.password.PasswordConstraintValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +21,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -39,15 +37,16 @@ public class AuthenticationService {
     private final TokenRepository tokenRepository;
 
     public AuthenticationResponse register(RegisterRequest request, String ipAddress) {
-        // TODO: Controllo che non ci sia già l'utente
+        // Controllo che l'account non esista già
         var duplicateAccount = accountRepository.findByEmail(request.getEmail());
         if(duplicateAccount.isPresent())
             throw new DuplicateAccountException(BTExceptionName.AUTH_REGISTRATION_DUPLICATE_USERNAME_ACCOUNT.name());
 
-        // TODO: Controllo la password se soddisfa i requisiti
-        PasswordConstraintValidator.isValid(request.getPassword(), Locale.ITALIAN);
+        // Controllo che la password soddisfi i requisiti minimi
+        PasswordConstraintValidator.isValid(request.getPassword());
+        if(!request.getPassword().equals(request.getConfirmPassword()))
+            throw new PasswordsDoNotMatchException(BTExceptionName.AUTH_REGISTRATION_PASSWORDS_DO_NOT_MATCH.name());
 
-        // TODO: Imposta il ruolo fisso USER
         // Creo l'utente con ruolo di USER impostando tutti i campi necessari
         var user = Account
                 .builder()
@@ -55,9 +54,9 @@ public class AuthenticationService {
                 .lastname(request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
+                .role(new Role(RoleEnum.USER.getRoleId()))
                 .createdAt(LocalDateTime.now())
-                .status(new AccountStatus(1))
+                .status(new AccountStatus(AccountStatusEnum.Pending.getStatusId()))
                 .build();
 
         // Salvo l'utente appena creato
@@ -71,6 +70,8 @@ public class AuthenticationService {
 
         // Salva il token dell'utente
         saveUserToken(savedUser, accessToken, refreshToken, ipAddress, TokenTypeEnum.BEARER, TokenScopeCategoryEnum.BTD_REGISTRATION);
+
+        // TODO: Invia l'email
 
         // Ritorno il token appena generato
         return AuthenticationResponse

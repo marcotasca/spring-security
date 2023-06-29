@@ -1,11 +1,15 @@
 package com.bsf.security.sec.config;
 
+import com.bsf.security.exception._common.BTExceptionResolver;
 import com.bsf.security.exception.security.jwt.SecurityJWTException;
+import com.bsf.security.sec.token.JWTStateEnum;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -16,8 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-@Service
 @Slf4j
+@RequiredArgsConstructor
+@Service
 public class JwtService {
 
     /**
@@ -26,19 +31,22 @@ public class JwtService {
      * @see <a href="https://www.allkeysgenerator.com/">Generatore di chiave</a>
      */
     @Value("${application.security.jwt.secret-key}")
-    private String secretKey;
+    private final String secretKey;
 
     /**
      * Il tempo di scadenza del token.
      */
     @Value("${application.security.jwt.expiration}")
-    private long jwtExpiration;
+    private final long jwtExpiration;
 
     /**
      * Il tempo di scadenza per il token di refresh.
      */
     @Value("${application.security.jwt.refresh-token.expiration}")
-    private long refreshExpiration;
+    private final long refreshExpiration;
+
+    @Autowired
+    private final BTExceptionResolver btExceptionResolver;
 
     /**
      * Estrae lo username dal token inviato nel header della richiesta.
@@ -59,7 +67,7 @@ public class JwtService {
      */
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+        return claims == null ? null : claimsResolver.apply(claims);
     }
 
     /**
@@ -103,6 +111,8 @@ public class JwtService {
      * @return la stringa contenente il token.
      */
     public String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
+        extraClaims.put("roles", userDetails.getAuthorities());
+
         return Jwts
                 .builder()
                 .setHeaderParam("typ", "JWT")
@@ -110,6 +120,7 @@ public class JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .setIssuer("Biotekna")
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -164,18 +175,28 @@ public class JwtService {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException ex) {
-            throw new Error(ex);
+            Object[] args = new Object[] {ex.getClaims()};
+            btExceptionResolver.resolveAuthBTException(
+                    JWTStateEnum.JWT_EXPIRED.name(), new SecurityJWTException(ex.getMessage(), args), token
+            );
         } catch (IllegalArgumentException ex) {
-            log.error("Token is null, empty or only whitespace -> {}", ex.getMessage());
+            btExceptionResolver.resolveAuthBTException(
+                    JWTStateEnum.TOKEN_NULL_EMPTY_OR_WHITESPACE.name(), new SecurityJWTException(ex.getMessage()), token
+            );
         } catch (MalformedJwtException ex) {
-            log.error("JWT is invalid -> {}", ex.getMessage());
+            btExceptionResolver.resolveAuthBTException(
+                    JWTStateEnum.JWT_INVALID.name(), new SecurityJWTException(ex.getMessage()), token
+            );
         } catch (UnsupportedJwtException ex) {
-            log.error("JWT is not supported -> {}", ex.getMessage());
+            btExceptionResolver.resolveAuthBTException(
+                    JWTStateEnum.JWT_NOT_SUPPORTED.name(), new SecurityJWTException(ex.getMessage()), token
+            );
         } catch (SignatureException ex) {
-            log.error("Signature validation failed -> {}", ex.getMessage());
+            btExceptionResolver.resolveAuthBTException(
+                    JWTStateEnum.SIGNATURE_VALIDATION_FAILED.name(), new SecurityJWTException(ex.getMessage()), token
+            );
         }
 
-        // TODO: Questo genera NullPointerException, gestisci le eccezioni.
         return null;
     }
 

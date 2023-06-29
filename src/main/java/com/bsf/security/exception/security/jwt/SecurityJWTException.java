@@ -8,4 +8,8 @@ public class SecurityJWTException extends BTException {
         super(message);
     }
 
+    public SecurityJWTException(String message, Object[] args) {
+        super(message, args);
+    }
+
 }
