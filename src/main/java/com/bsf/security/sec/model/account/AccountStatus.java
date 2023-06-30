@@ -1,16 +1,18 @@
-package com.bsf.security.sec.token;
+package com.bsf.security.sec.model.account;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "token_scope_category")
-public class TokenScopeCategory {
+@Table(name = "account_status")
+public class AccountStatus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +22,7 @@ public class TokenScopeCategory {
     @Column(name = "name")
     private String name;
 
-    public TokenScopeCategory(int id) {
+    public AccountStatus(int id) {
         this.id = id;
     }
 

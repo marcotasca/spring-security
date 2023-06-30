@@ -2,12 +2,11 @@ package com.bsf.security.sec.config;
 
 import com.bsf.security.exception._common.BTExceptionResolver;
 import com.bsf.security.exception.security.jwt.SecurityJWTException;
-import com.bsf.security.sec.token.JWTStateEnum;
+import com.bsf.security.sec.model.token.JWTStateEnum;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +20,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Slf4j
-@RequiredArgsConstructor
 @Service
 public class JwtService {
 
@@ -31,22 +29,22 @@ public class JwtService {
      * @see <a href="https://www.allkeysgenerator.com/">Generatore di chiave</a>
      */
     @Value("${application.security.jwt.secret-key}")
-    private final String secretKey;
+    private String secretKey;
 
     /**
      * Il tempo di scadenza del token.
      */
     @Value("${application.security.jwt.expiration}")
-    private final long jwtExpiration;
+    private long jwtExpiration;
 
     /**
      * Il tempo di scadenza per il token di refresh.
      */
     @Value("${application.security.jwt.refresh-token.expiration}")
-    private final long refreshExpiration;
+    private long refreshExpiration;
 
     @Autowired
-    private final BTExceptionResolver btExceptionResolver;
+    private BTExceptionResolver btExceptionResolver;
 
     /**
      * Estrae lo username dal token inviato nel header della richiesta.

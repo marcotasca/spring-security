@@ -1,4 +1,4 @@
-package com.bsf.security.sec.token;
+package com.bsf.security.sec.model.token;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -1,4 +1,4 @@
-package com.bsf.security.sec.token;
+package com.bsf.security.sec.model.token;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "token_type")
-public class TokenType {
+@Table(name = "token_scope_category")
+public class TokenScopeCategory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +20,7 @@ public class TokenType {
     @Column(name = "name")
     private String name;
 
-    public TokenType(int id) {
+    public TokenScopeCategory(int id) {
         this.id = id;
     }
 

@@ -1,10 +1,10 @@
 package com.bsf.security.sec.demo;
 
-import com.bsf.security.sec.account.Account;
-import com.bsf.security.sec.token.Token;
-import com.bsf.security.sec.token.TokenRepository;
-import com.bsf.security.sec.account.Permission;
-import com.bsf.security.sec.account.AccountRepository;
+import com.bsf.security.sec.model.account.Account;
+import com.bsf.security.sec.model.token.Token;
+import com.bsf.security.sec.model.token.TokenRepository;
+import com.bsf.security.sec.model.account.Permission;
+import com.bsf.security.sec.model.account.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

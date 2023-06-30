@@ -1,4 +1,4 @@
-package com.bsf.security.sec.account;
+package com.bsf.security.sec.model.account;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,4 +1,4 @@
-package com.bsf.security.sec.account;
+package com.bsf.security.sec.model.account;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -11,19 +11,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "account_status")
-public class AccountStatus {
+@Table(name = "xref_role_permission")
+public class XrefRolePermission {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private int id;
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "fk_role_id")
+    private int roleId;
 
-    public AccountStatus(int id) {
-        this.id = id;
-    }
+    @Column(name = "fk_permission_id")
+    private int permissionId;
 
 }

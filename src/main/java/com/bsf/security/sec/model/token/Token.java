@@ -1,6 +1,6 @@
-package com.bsf.security.sec.token;
+package com.bsf.security.sec.model.token;
 
-import com.bsf.security.sec.account.Account;
+import com.bsf.security.sec.model.account.Account;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -1,4 +1,4 @@
-package com.bsf.security.sec.token;
+package com.bsf.security.sec.model.token;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

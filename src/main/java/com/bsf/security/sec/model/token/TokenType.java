@@ -1,28 +1,27 @@
-package com.bsf.security.sec.account;
+package com.bsf.security.sec.model.token;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "xref_role_permission")
-public class XrefRolePermission {
+@Table(name = "token_type")
+public class TokenType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private int id;
 
-    @Column(name = "fk_role_id")
-    private int roleId;
+    @Column(name = "name")
+    private String name;
 
-    @Column(name = "fk_permission_id")
-    private int permissionId;
+    public TokenType(int id) {
+        this.id = id;
+    }
 
 }

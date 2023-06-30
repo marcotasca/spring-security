@@ -1,7 +1,7 @@
 package com.bsf.security.service.mapstruct;
 
 import com.bsf.security.mapstruct.dtos.AccountDto;
-import com.bsf.security.sec.account.Account;
+import com.bsf.security.sec.model.account.Account;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

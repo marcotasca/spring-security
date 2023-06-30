@@ -1,4 +1,4 @@
-package com.bsf.security.sec.account;
+package com.bsf.security.sec.model.account;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -45,6 +45,9 @@ public class Account implements UserDetails {
 
     @Column(name = "password")
     private String password;
+
+    @Column(name = "provider")
+    private String provider;
 
     @JsonProperty("created_at")
     @Column(name = "created_at")

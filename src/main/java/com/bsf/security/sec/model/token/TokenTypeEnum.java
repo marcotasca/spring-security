@@ -1,4 +1,4 @@
-package com.bsf.security.sec.token;
+package com.bsf.security.sec.model.token;
 
 public enum TokenTypeEnum {
     BEARER(1);

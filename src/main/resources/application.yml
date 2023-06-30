@@ -1,4 +1,21 @@
 spring:
+  main:
+    allow-bean-definition-overriding: true
+  mvc:
+    view:
+      prefix: /templates
+      suffix: .html
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            clientId: 1080514658625-hrihjje4km1cplghrbnt9ukb2n3mkg1g.apps.googleusercontent.com
+            clientSecret: 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
+            #redirectUri: "{baseUrl}/oauth2/callback/{registrationId}"
+            scope:
+              - email
+              - profile
   datasource:
     url: jdbc:mariadb://localhost:3306/btdoctor
     username: root
@@ -21,3 +38,5 @@ application:
       expiration: 86400000 # 1 day
       refresh-token:
         expiration: 604800000 # 7 days
+  authorizedRedirectUris:
+    - http://localhost:8080/oauth2/redirect

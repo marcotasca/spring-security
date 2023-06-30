@@ -1,6 +1,5 @@
 package com.bsf.security.sec.auth;
 
-import com.bsf.security.sec.account.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

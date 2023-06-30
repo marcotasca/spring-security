@@ -1,7 +1,7 @@
 package com.bsf.security.sec.config;
 
-import com.bsf.security.sec.token.Token;
-import com.bsf.security.sec.token.TokenRepository;
+import com.bsf.security.sec.model.token.Token;
+import com.bsf.security.sec.model.token.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

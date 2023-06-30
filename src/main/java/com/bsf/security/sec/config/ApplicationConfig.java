@@ -1,6 +1,6 @@
 package com.bsf.security.sec.config;
 
-import com.bsf.security.sec.account.AccountRepository;
+import com.bsf.security.sec.model.account.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

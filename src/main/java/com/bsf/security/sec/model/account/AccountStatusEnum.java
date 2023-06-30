@@ -1,4 +1,4 @@
-package com.bsf.security.sec.account;
+package com.bsf.security.sec.model.account;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

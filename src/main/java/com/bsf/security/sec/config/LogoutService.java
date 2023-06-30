@@ -1,6 +1,6 @@
 package com.bsf.security.sec.config;
 
-import com.bsf.security.sec.token.TokenRepository;
+import com.bsf.security.sec.model.token.TokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
