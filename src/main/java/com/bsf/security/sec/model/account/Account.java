@@ -6,9 +6,11 @@ import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
@@ -17,7 +19,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Entity
 @Table(name = "account")
-public class Account implements UserDetails {
+public class Account implements UserDetails, OAuth2User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +58,14 @@ public class Account implements UserDetails {
     @JsonProperty("deleted_at")
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Transient
+    private Map<String, Object> attributes;
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -100,5 +110,10 @@ public class Account implements UserDetails {
     public boolean isEnabled() {
         //return status.getName().equals(AccountStatusEnum.Enabled.name());
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return String.valueOf(id);
     }
 }

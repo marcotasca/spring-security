@@ -2,9 +2,7 @@ package com.bsf.security.sec.config;
 
 import com.bsf.security.sec.model.account.PermissionEnum;
 import com.bsf.security.sec.model.account.RoleEnum;
-import com.bsf.security.sec.oauth.CustomOAuth2User;
-import com.bsf.security.sec.oauth.CustomOAuth2UserService;
-import com.bsf.security.sec.oauth.OAuth2AuthenticationSuccessHandler;
+import com.bsf.security.sec.oauth.*;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,7 +48,12 @@ public class SecurityConfiguration {
 
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    //private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+
+    @Bean
+    public HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository() {
+        return new HttpCookieOAuth2AuthorizationRequestRepository();
+    }
 
     @Bean
     public SecurityFilterChain jwtSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -59,7 +62,7 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         // Abilita una whitelist di url
-                        .requestMatchers("/api/v1/auth/**", "/login", "/oauth/**")
+                        .requestMatchers("/api/v1/auth/**", "/login/**", "/login/oauth2/**")
                         .permitAll()
 
                         // Imposto la sicurezza per i path
@@ -72,24 +75,6 @@ public class SecurityConfiguration {
                         .authenticated()
                 )
                 .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
-                .oauth2Login(httpSecurityOAuth2LoginConfigurer -> httpSecurityOAuth2LoginConfigurer
-                        .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
-                                .userService(oauthUserService)
-                        )
-                        .successHandler(new AuthenticationSuccessHandler() {
-                            @Override
-                            public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-                                CustomOAuth2User oauthUser = (CustomOAuth2User) authentication.getPrincipal();
-
-                                System.out.println(oauthUser.getEmail());
-                                System.out.println(oauthUser.getName());
-                                System.out.println(oauthUser.getAttributes());
-                                System.out.println(oauthUser.getAuthorities());
-
-                                //response.sendRedirect("/list");
-                            }
-                        })
-                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Forniamo AuthenticationProvider creato in ApplicationConfig
                 .authenticationProvider(authenticationProvider)
@@ -104,6 +89,20 @@ public class SecurityConfiguration {
                 // Imposto come valore di status il 401 quando fallisce l'autenticazione
                 .exceptionHandling(httpSecurityExceptionHandlingConfigurer ->
                         httpSecurityExceptionHandlingConfigurer.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                )
+                .oauth2Login(httpSecurityOAuth2LoginConfigurer -> httpSecurityOAuth2LoginConfigurer
+                        .authorizationEndpoint(authorizationEndpointConfig -> authorizationEndpointConfig
+                                .baseUri("/oauth2/authorize")
+                                .authorizationRequestRepository(cookieAuthorizationRequestRepository())
+                        )
+                        .redirectionEndpoint(redirectionEndpointConfig -> redirectionEndpointConfig
+                                .baseUri("/oauth2/callback/*")
+                        )
+                        .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
+                                .userService(oauthUserService)
+                        )
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
                 );
 
 

@@ -1,5 +1,8 @@
 package com.bsf.security.sec.oauth.user;
 
+import org.springframework.security.core.GrantedAuthority;
+
+import java.util.Collection;
 import java.util.Map;
 
 public class GoogleOAuth2UserInfo extends OAuth2UserInfo {
@@ -27,4 +30,25 @@ public class GoogleOAuth2UserInfo extends OAuth2UserInfo {
     public String getImageUrl() {
         return (String) attributes.get("picture");
     }
+
+    public String getGivenName() {
+        return (String) attributes.get("given_name");
+    }
+
+    public String getFamilyName() {
+        return (String) attributes.get("family_name");
+    }
+
+    public String getSub() {
+        return (String) attributes.get("sub");
+    }
+
+    public String getLocale() {
+        return (String) attributes.get("locale");
+    }
+
+    public Boolean isEmailVerified() {
+        return (Boolean) attributes.get("email_verified");
+    }
+
 }
