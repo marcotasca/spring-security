@@ -62,7 +62,16 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         // Abilita una whitelist di url
-                        .requestMatchers("/api/v1/auth/**", "/login/**", "/login/oauth2/**")
+                        .requestMatchers("/api/v1/auth/**", "/oauth2/**", "/",
+                                "/error",
+                                "/favicon.ico",
+                                "/**/*.png",
+                                "/**/*.gif",
+                                "/**/*.svg",
+                                "/**/*.jpg",
+                                "/**/*.html",
+                                "/**/*.css",
+                                "/**/*.js")
                         .permitAll()
 
                         // Imposto la sicurezza per i path

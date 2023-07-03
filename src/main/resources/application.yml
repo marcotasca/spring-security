@@ -11,8 +11,8 @@ spring:
         registration:
           google:
             clientId: 1080514658625-hrihjje4km1cplghrbnt9ukb2n3mkg1g.apps.googleusercontent.com
-            clientSecret: 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
-            #redirectUri: "{baseUrl}/oauth2/callback/{registrationId}"
+            clientSecret: ${GOOGLE_CLIENT_SECRET}
+            redirectUri: "{baseUrl}/oauth2/callback/{registrationId}"
             scope:
               - email
               - profile
@@ -39,4 +39,4 @@ application:
       refresh-token:
         expiration: 604800000 # 7 days
   authorizedRedirectUris:
-    - http://localhost:8080/oauth2/redirect
+    - http://localhost:3000/oauth2/redirect

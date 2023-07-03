@@ -42,7 +42,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 oAuth2UserRequest.getClientRegistration().getRegistrationId(), oAuth2User.getAttributes()
         );
 
-        if(oAuth2UserInfo.getEmail() != null && !oAuth2UserInfo.getEmail().isEmpty()) {
+        if(oAuth2UserInfo.getEmail() != null && oAuth2UserInfo.getEmail().isEmpty()) {
             throw new OAuth2AuthenticationProcessingException("Email not found from OAuth2 provider");
         }
 
@@ -52,26 +52,27 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         if(accountOptional.isPresent()) {
             account = accountOptional.get();
-            if(!account.getProvider().equals(authProvider)) {
+            if(!account.getProvider().equalsIgnoreCase(authProvider)) {
                 throw new OAuth2AuthenticationProcessingException("Looks like you're signed up with " +
                         account.getProvider() + " account. Please use your " + account.getProvider() +
                         " account to login.");
             }
             //account = updateExistingUser(account, oAuth2UserInfo);
         } else {
-            if(AuthProvider.GOOGLE.name().equals(authProvider)) account = registerNewUser(oAuth2UserRequest, (GoogleOAuth2UserInfo) oAuth2UserInfo);
+            if(AuthProvider.GOOGLE.name().equalsIgnoreCase(authProvider)) account = registerNewUser(oAuth2UserRequest, (GoogleOAuth2UserInfo) oAuth2UserInfo);
             else account = new Account();
         }
 
-        account.setAttributes(oAuth2User.getAttributes());
-        return account;
+        System.out.println(oAuth2User.getAttributes());
+
+        return UserPrincipal.create(account, oAuth2User.getAttributes());
     }
 
     private Account registerNewUser(OAuth2UserRequest oAuth2UserRequest, GoogleOAuth2UserInfo googleOAuth2UserInfo) {
         var accountStatusId = googleOAuth2UserInfo.isEmailVerified() ?
                 AccountStatusEnum.Enabled : AccountStatusEnum.Pending;
 
-        return Account
+        var account = Account
                 .builder()
                 .firstname(googleOAuth2UserInfo.getGivenName())
                 .lastname(googleOAuth2UserInfo.getFamilyName())
@@ -82,6 +83,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .status(new AccountStatus(accountStatusId.getStatusId()))
                 .provider(oAuth2UserRequest.getClientRegistration().getRegistrationId())
                 .build();
+
+        return accountRepository.save(account);
     }
 
     private Account updateExistingUser(Account existingAccount, OAuth2UserInfo oAuth2UserInfo) {
