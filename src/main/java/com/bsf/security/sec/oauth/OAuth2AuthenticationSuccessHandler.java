@@ -1,13 +1,21 @@
 package com.bsf.security.sec.oauth;
 
+import com.bsf.security.sec.auth.AuthenticationService;
+import com.bsf.security.sec.auth.TokenService;
 import com.bsf.security.sec.config.AppPropertiesConfig;
 import com.bsf.security.sec.config.JwtService;
+import com.bsf.security.sec.model.account.Account;
+import com.bsf.security.sec.model.account.AccountRepository;
+import com.bsf.security.sec.model.token.TokenScopeCategoryEnum;
+import com.bsf.security.sec.model.token.TokenTypeEnum;
 import com.bsf.security.util.CookieUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -22,6 +30,11 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+    @Autowired
+    TokenService tokenService;
+
+    private final AccountRepository accountRepository;
 
     private final JwtService jwtService;
 
@@ -59,6 +72,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String targetUrl = redirectUri.orElse(getDefaultTargetUrl());
 
         String token = jwtService.generateToken((UserDetails) authentication.getPrincipal());
+
+        accountRepository.findByEmail(
+                ((UserDetails) authentication.getPrincipal()).getUsername()
+        ).ifPresent(account -> tokenService.saveUserToken(
+                account, token, token, request.getRemoteAddr(), TokenTypeEnum.BEARER, TokenScopeCategoryEnum.BTD_REGISTRATION
+        ));
 
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("token", token)

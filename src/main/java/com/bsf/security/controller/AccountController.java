@@ -21,8 +21,6 @@ public class AccountController {
 
     private final MapStruct mapStruct;
 
-    private final PasswordEncoder passwordEncoder;
-
     @GetMapping
     public ResponseEntity<AccountDto> getAccountInfo(Authentication authentication) {
         if(authentication != null) System.out.println(20/0);

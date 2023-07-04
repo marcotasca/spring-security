@@ -3,6 +3,8 @@ package com.bsf.security.sec.oauth;
 import com.bsf.security.exception.security.OAuth2AuthenticationProcessingException;
 import com.bsf.security.sec.model.AuthProvider;
 import com.bsf.security.sec.model.account.*;
+import com.bsf.security.sec.model.provider.XrefAccountProvider;
+import com.bsf.security.sec.model.provider.XrefAccountProviderRepository;
 import com.bsf.security.sec.oauth.user.GoogleOAuth2UserInfo;
 import com.bsf.security.sec.oauth.user.OAuth2UserInfo;
 import com.bsf.security.sec.oauth.user.OAuth2UserInfoFactory;
@@ -23,6 +25,8 @@ import java.util.Optional;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final AccountRepository accountRepository;
+
+    private final XrefAccountProviderRepository xrefAccountProviderRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest oAuth2UserRequest) throws OAuth2AuthenticationException {
@@ -52,10 +56,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         if(accountOptional.isPresent()) {
             account = accountOptional.get();
-            if(!account.getProvider().equalsIgnoreCase(authProvider)) {
-                throw new OAuth2AuthenticationProcessingException("Looks like you're signed up with " +
-                        account.getProvider() + " account. Please use your " + account.getProvider() +
-                        " account to login.");
+
+            boolean isAuthProviderPresent = account.getProviders()
+                    .stream()
+                    .anyMatch(provider -> provider.getName().equalsIgnoreCase(authProvider));
+
+            if(!isAuthProviderPresent) {
+                throw new OAuth2AuthenticationProcessingException(
+                        "Looks like you're signed up with other account. Please use your other account to login."
+                );
             }
             //account = updateExistingUser(account, oAuth2UserInfo);
         } else {
@@ -81,10 +90,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .role(new Role(RoleEnum.USER.getRoleId()))
                 .createdAt(LocalDateTime.now())
                 .status(new AccountStatus(accountStatusId.getStatusId()))
-                .provider(oAuth2UserRequest.getClientRegistration().getRegistrationId())
                 .build();
 
-        return accountRepository.save(account);
+        account = accountRepository.save(account);
+
+        var providerRelation = XrefAccountProvider
+                .builder()
+                .providerId(AuthProvider.GOOGLE.getProviderId())
+                .accountId(account.getId())
+                .build();
+
+        xrefAccountProviderRepository.save(providerRelation);
+
+        return account;
     }
 
     private Account updateExistingUser(Account existingAccount, OAuth2UserInfo oAuth2UserInfo) {

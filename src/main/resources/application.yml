@@ -5,6 +5,8 @@ spring:
     view:
       prefix: /templates
       suffix: .html
+    pathpattern:
+      matching-strategy: ANT_PATH_MATCHER
   security:
     oauth2:
       client:

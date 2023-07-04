@@ -1,5 +1,6 @@
 package com.bsf.security.sec.model.account;
 
+import com.bsf.security.sec.model.provider.Provider;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +11,9 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Data
@@ -19,7 +22,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Entity
 @Table(name = "account")
-public class Account implements UserDetails, OAuth2User {
+public class Account implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,9 +51,6 @@ public class Account implements UserDetails, OAuth2User {
     @Column(name = "password")
     private String password;
 
-    @Column(name = "provider")
-    private String provider;
-
     @JsonProperty("created_at")
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -59,13 +59,13 @@ public class Account implements UserDetails, OAuth2User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @Transient
-    private Map<String, Object> attributes;
-
-    @Override
-    public Map<String, Object> getAttributes() {
-        return attributes;
-    }
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "xref_account_provider",
+            joinColumns = @JoinColumn(name = "fk_account_id"),
+            inverseJoinColumns = @JoinColumn(name = "fk_provider_id")
+    )
+    Set<Provider> providers;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -112,8 +112,4 @@ public class Account implements UserDetails, OAuth2User {
         return true;
     }
 
-    @Override
-    public String getName() {
-        return String.valueOf(id);
-    }
 }
