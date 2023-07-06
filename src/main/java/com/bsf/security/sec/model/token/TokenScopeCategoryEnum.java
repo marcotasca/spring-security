@@ -5,8 +5,8 @@ import lombok.Getter;
 
 @AllArgsConstructor
 public enum TokenScopeCategoryEnum {
-    BTD_REGISTRATION(1),
-    BTD_RW(2);
+    BTD_RW(1),
+    BTD_REGISTRATION(2);
 
     @Getter
     private final int tokenScopeCategoryId;
