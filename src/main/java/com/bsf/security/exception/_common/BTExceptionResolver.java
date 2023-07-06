@@ -1,10 +1,8 @@
 package com.bsf.security.exception._common;
 
-import com.bsf.security.exception.account.InvalidPasswordAccountException;
 import com.bsf.security.exception.account.InvalidPasswordAccountListException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;

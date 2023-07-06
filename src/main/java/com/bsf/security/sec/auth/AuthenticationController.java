@@ -26,7 +26,7 @@ public class AuthenticationController {
 
     @GetMapping("/verify/{token}")
     public ResponseEntity<Void> verify(
-            @PathVariable("token") String token, HttpServletRequest httpRequest
+            @PathVariable("token") String token
     ) {
         authenticationService.verify(token);
         return ResponseEntity.noContent().build();
