@@ -1,4 +1,4 @@
-package com.bsf.security.sec.model;
+package com.bsf.security.sec.model.provider;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

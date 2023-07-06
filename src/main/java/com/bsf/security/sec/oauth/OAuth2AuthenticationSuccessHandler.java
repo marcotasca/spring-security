@@ -1,10 +1,8 @@
 package com.bsf.security.sec.oauth;
 
-import com.bsf.security.sec.auth.AuthenticationService;
-import com.bsf.security.sec.auth.TokenService;
-import com.bsf.security.sec.config.AppPropertiesConfig;
+import com.bsf.security.service.auth.token.TokenService;
+import com.bsf.security.config.AppPropertiesConfig;
 import com.bsf.security.sec.config.JwtService;
-import com.bsf.security.sec.model.account.Account;
 import com.bsf.security.sec.model.account.AccountRepository;
 import com.bsf.security.sec.model.token.TokenScopeCategoryEnum;
 import com.bsf.security.sec.model.token.TokenTypeEnum;
@@ -13,7 +11,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;

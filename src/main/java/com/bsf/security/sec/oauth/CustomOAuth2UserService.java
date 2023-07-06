@@ -1,10 +1,9 @@
 package com.bsf.security.sec.oauth;
 
 import com.bsf.security.exception.security.OAuth2AuthenticationProcessingException;
-import com.bsf.security.sec.model.AuthProvider;
+import com.bsf.security.sec.model.provider.AuthProvider;
 import com.bsf.security.sec.model.account.*;
-import com.bsf.security.sec.model.provider.XrefAccountProvider;
-import com.bsf.security.sec.model.provider.XrefAccountProviderRepository;
+import com.bsf.security.service.auth.provider.ProviderService;
 import com.bsf.security.sec.oauth.user.GoogleOAuth2UserInfo;
 import com.bsf.security.sec.oauth.user.OAuth2UserInfo;
 import com.bsf.security.sec.oauth.user.OAuth2UserInfoFactory;
@@ -26,7 +25,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final AccountRepository accountRepository;
 
-    private final XrefAccountProviderRepository xrefAccountProviderRepository;
+    private final ProviderService providerService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest oAuth2UserRequest) throws OAuth2AuthenticationException {
@@ -94,13 +93,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         account = accountRepository.save(account);
 
-        var providerRelation = XrefAccountProvider
-                .builder()
-                .providerId(AuthProvider.GOOGLE.getProviderId())
-                .accountId(account.getId())
-                .build();
-
-        xrefAccountProviderRepository.save(providerRelation);
+        providerService.addProviderToAccount(AuthProvider.GOOGLE.getProviderId(), account.getId());
 
         return account;
     }
