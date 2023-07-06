@@ -1,5 +1,6 @@
 package com.bsf.security.sec.config;
 
+import com.bsf.security.config.AppPropertiesConfig;
 import com.bsf.security.exception._common.BTExceptionResolver;
 import com.bsf.security.exception.security.jwt.SecurityJWTException;
 import com.bsf.security.sec.model.token.JWTStateEnum;
@@ -23,28 +24,11 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    /**
-     * Chiave privata esadecimale.
-     * Il minimo accettato è 256-bit.
-     * @see <a href="https://www.allkeysgenerator.com/">Generatore di chiave</a>
-     */
-    @Value("${application.security.jwt.secret-key}")
-    private String secretKey;
-
-    /**
-     * Il tempo di scadenza del token.
-     */
-    @Value("${application.security.jwt.expiration}")
-    private long jwtExpiration;
-
-    /**
-     * Il tempo di scadenza per il token di refresh.
-     */
-    @Value("${application.security.jwt.refresh-token.expiration}")
-    private long refreshExpiration;
-
     @Autowired
     private BTExceptionResolver btExceptionResolver;
+
+    @Autowired
+    private AppPropertiesConfig appPropertiesConfig;
 
     /**
      * Estrae lo username dal token inviato nel header della richiesta.
@@ -69,6 +53,17 @@ public class JwtService {
     }
 
     /**
+     * Genera il token per la registrazione.
+     *
+     * @param userDetails i dettagli dell'utente.
+     * @return la stringa contenente il token.
+     */
+    public String generateRegistrationToken(UserDetails userDetails) {
+        int expirationTimeMillis = appPropertiesConfig.getSecurity().getJwt().getRegistrationToken().getExpiration();
+        return buildToken(new HashMap<>(), userDetails, expirationTimeMillis);
+    }
+
+    /**
      * Genera il token solo con i dettagli dell'utente.
      *
      * @param userDetails i dettagli dell'utente.
@@ -86,7 +81,9 @@ public class JwtService {
      * @return la stringa contenente il token.
      */
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return buildToken(extraClaims, userDetails, jwtExpiration);
+        int expirationTimeMillis = appPropertiesConfig.getSecurity().getJwt().getExpiration();
+        extraClaims.put("roles", userDetails.getAuthorities());
+        return buildToken(extraClaims, userDetails, expirationTimeMillis);
     }
 
     /**
@@ -96,7 +93,8 @@ public class JwtService {
      * @return la stringa contenente il token.
      */
     public String generateRefreshToken(UserDetails userDetails) {
-        return buildToken(new HashMap<>(), userDetails, refreshExpiration);
+        int expirationTimeMillis = appPropertiesConfig.getSecurity().getJwt().getRefreshToken().getExpiration();
+        return buildToken(new HashMap<>(), userDetails, expirationTimeMillis);
     }
 
     /**
@@ -105,19 +103,17 @@ public class JwtService {
      *
      * @param extraClaims i claims aggiuntivi non fondamentali.
      * @param userDetails i dettagli dell'utente.
-     * @param expiration il tempo espresso in millisecondi per cui scadrà il token.
+     * @param expirationTimeMillis il tempo espresso in millisecondi per cui scadrà il token.
      * @return la stringa contenente il token.
      */
-    public String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
-        extraClaims.put("roles", userDetails.getAuthorities());
-
+    public String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expirationTimeMillis) {
         return Jwts
                 .builder()
                 .setHeaderParam("typ", "JWT")
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTimeMillis))
                 .setIssuer("Biotekna")
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
@@ -199,12 +195,14 @@ public class JwtService {
     }
 
     /**
-     * Decodifica in BASE64 la chiave segreta precedentemente creata e la modifica creando una nuova
-     * chiave privata con l'algoritmo HMAC-SHA partendo dalla chiave decodificata precedentemente.
+     * Decodifica in BASE64 la chiave segreta (esadecimale, min 256-bit) precedentemente creata e la modifica creando
+     * una nuova chiave privata con l'algoritmo HMAC-SHA partendo dalla chiave decodificata precedentemente.
      *
+     * @see <a href="https://www.allkeysgenerator.com/">Generatore di chiave</a>
      * @return chiave privata con algoritmo HMAC-SHA.
      */
     private Key getSignInKey() {
+        String secretKey = appPropertiesConfig.getSecurity().getJwt().getSecretKey();
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }

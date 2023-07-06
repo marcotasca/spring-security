@@ -5,7 +5,10 @@ import com.bsf.security.exception.account.DuplicateAccountException;
 import com.bsf.security.exception.account.PasswordsDoNotMatchException;
 import com.bsf.security.sec.config.JwtService;
 import com.bsf.security.sec.model.account.*;
+import com.bsf.security.sec.model.provider.AuthProvider;
+import com.bsf.security.service.auth.provider.ProviderService;
 import com.bsf.security.sec.model.token.*;
+import com.bsf.security.service.auth.token.TokenService;
 import com.bsf.security.validation.password.PasswordConstraintValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,8 +22,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +39,11 @@ public class AuthenticationService {
 
     private final TokenRepository tokenRepository;
 
-    public AuthenticationResponse register(RegisterRequest request, String ipAddress) {
+    private final TokenService tokenService;
+
+    private final ProviderService providerService;
+
+    public void register(RegisterRequest request, String ipAddress) {
         // Controllo che l'account non esista già
         var duplicateAccount = accountRepository.findByEmail(request.getEmail());
         if(duplicateAccount.isPresent())
@@ -54,33 +61,55 @@ public class AuthenticationService {
                 .lastname(request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(new Role(RoleEnum.USER.getRoleId()))
+                .role(new Role(RoleEnum.ADMIN.getRoleId()))
                 .createdAt(LocalDateTime.now())
                 .status(new AccountStatus(AccountStatusEnum.Pending.getStatusId()))
                 .build();
 
         // Salvo l'utente appena creato
-        var savedUser = accountRepository.save(user);
+        var savedAccount = accountRepository.save(user);
 
-        // Creo un token con i dati dell'utente creato
-        var accessToken = jwtService.generateToken(user);
+        // Salvo il provider collegato all'account
+        providerService.addProviderToAccount(AuthProvider.LOCAL.getProviderId(), savedAccount.getId());
 
-        // Creo il token di refresh
-        var refreshToken = jwtService.generateRefreshToken(user);
+        // Creo un token per la verifica della registrazione
+        var accessToken = jwtService.generateRegistrationToken(user);
 
         // Salva il token dell'utente
-        saveUserToken(savedUser, accessToken, refreshToken, ipAddress, TokenTypeEnum.BEARER, TokenScopeCategoryEnum.BTD_REGISTRATION);
+        tokenService.saveUserToken(
+                savedAccount,
+                accessToken,
+                null,
+                ipAddress,
+                TokenTypeEnum.BEARER,
+                TokenScopeCategoryEnum.BTD_REGISTRATION
+        );
 
         // TODO: Invia l'email
 
-        // Ritorno il token appena generato
-        return AuthenticationResponse
-                .builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
     }
 
+    public void verify(String tokenVerify) {
+        // Estraggo lo username dal token
+        String username = jwtService.extractUsername(tokenVerify);
+
+        // Se lo username non è nullo
+        if(username != null) {
+
+            // Recupero l'utente dal database
+            var account = this.accountRepository.findByEmail(username).orElseThrow();
+
+            // Controllo che il token sia valido
+            if (jwtService.isValidToken(tokenVerify, account)) {
+                Optional<Token> token = tokenRepository.findByAccountIdAndTokenScopeCategoryId(
+                        account.getId(), TokenScopeCategoryEnum.BTD_REGISTRATION.getTokenScopeCategoryId()
+                );
+
+                System.out.println(token);
+            }
+        }
+
+    }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request, String ipAddress) {
         // Se non corretto AuthenticationManager si occupa già di sollevare eccezioni
@@ -98,13 +127,13 @@ public class AuthenticationService {
         // Creo un token con i dati dell'utente creato
         // TODO: Rendilo disponibile per tutti, la firma di generateToken dovrà avere lo User e non UserDetails
         // TODO: iss prendilo come nome da application.yml, non portare first e last name, crea un path per l'utente
-        HashMap<String, Object> extraClaims = new HashMap<>() {{
-            put("iss", "Biotekna Plus");
-            put("given_name", user.getFirstname());
-            put("family_name", user.getLastname());
-            put("roles", user.getAuthorities());
-        }};
-        var accessToken = jwtService.generateToken(extraClaims, user);
+//        HashMap<String, Object> extraClaims = new HashMap<>() {{
+//            put("iss", "Biotekna Plus");
+//            put("given_name", user.getFirstname());
+//            put("family_name", user.getLastname());
+//            put("roles", user.getAuthorities());
+//        }};
+        var accessToken = jwtService.generateToken(new HashMap<>(), user);
 
         // Creo il token di refresh
         var refreshToken = jwtService.generateRefreshToken(user);
@@ -113,7 +142,14 @@ public class AuthenticationService {
         revokeAllUserTokens(user);
 
         // Salva il token dell'utente
-        saveUserToken(user, accessToken, refreshToken, ipAddress, TokenTypeEnum.BEARER, TokenScopeCategoryEnum.BTD_RW);
+        tokenService.saveUserToken(
+                user,
+                accessToken,
+                refreshToken,
+                ipAddress,
+                TokenTypeEnum.BEARER,
+                TokenScopeCategoryEnum.BTD_RW
+        );
 
         // Ritorno il token appena generato
         return AuthenticationResponse
@@ -121,35 +157,6 @@ public class AuthenticationService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
-    }
-
-    public void saveUserToken(
-            Account account,
-            String accessToken,
-            String refreshToken,
-            String ipAddress,
-            TokenTypeEnum tokenType,
-            TokenScopeCategoryEnum tokenScopeCategoryEnum
-    ) {
-        // Estraggo le date di scadenza
-        Date accessTokenExpiration = jwtService.extractExpiration(accessToken);
-        Date refreshTokenExpiration = jwtService.extractExpiration(refreshToken);
-
-        // Creo il token per l'utente
-        var token = Token
-                .builder()
-                .account(account)
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType(new TokenType(tokenType.getTokenTypeId()))
-                .accessTokenExpiration(accessTokenExpiration)
-                .refreshTokenExpiration(refreshTokenExpiration)
-                .tokenScopeCategory(new TokenScopeCategory(tokenScopeCategoryEnum.getTokenScopeCategoryId()))
-                .ipAddress(ipAddress)
-                .build();
-
-        // Salvo il token per l'utente
-        tokenRepository.save(token);
     }
 
     private void revokeAllUserTokens(Account account) {
@@ -207,7 +214,14 @@ public class AuthenticationService {
 
                 // Salvo il token dell'utente
                 String ipAddress = request.getRemoteAddr();
-                saveUserToken(user, accessToken, currentRefreshToken, ipAddress, TokenTypeEnum.BEARER, TokenScopeCategoryEnum.BTD_RW);
+                tokenService.saveUserToken(
+                        user,
+                        accessToken,
+                        currentRefreshToken,
+                        ipAddress,
+                        TokenTypeEnum.BEARER,
+                        TokenScopeCategoryEnum.BTD_RW
+                );
 
                 // Creo la risposta da inviare
                 var authResponse = AuthenticationResponse.builder()
