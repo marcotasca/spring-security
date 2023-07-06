@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Optional;
 
 @Service
 public class TokenServiceImpl implements TokenService {
@@ -16,6 +17,11 @@ public class TokenServiceImpl implements TokenService {
 
     @Autowired
     TokenRepository tokenRepository;
+
+    @Override
+    public Optional<Token> findByAccountIdAndTokenScopeCategoryId(int accountId, int tokenScopeCategoryId) {
+        return tokenRepository.findByAccountIdAndTokenScopeCategoryId(accountId, tokenScopeCategoryId);
+    }
 
     public void saveUserToken(
             Account account,
@@ -48,6 +54,11 @@ public class TokenServiceImpl implements TokenService {
 
         // Salvo il token per l'utente
         tokenRepository.save(token);
+    }
+
+    @Override
+    public void delete(Token token) {
+        tokenRepository.delete(token);
     }
 
 }

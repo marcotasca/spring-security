@@ -1,6 +1,6 @@
 package com.bsf.security;
 
-import com.bsf.security.sec.auth.AuthenticationService;
+import com.bsf.security.service.auth.AuthenticationServiceImpl;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,7 +15,7 @@ public class SecurityApplication {
 
 	@Bean
 	public CommandLineRunner commandLineRunner(
-			AuthenticationService service
+			AuthenticationServiceImpl service
 	) {
 		return args -> {
 //            var admin = RegisterRequest.builder()

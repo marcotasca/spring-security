@@ -1,6 +1,6 @@
 package com.bsf.security.sec.oauth.user;
 
-import com.bsf.security.exception.security.OAuth2AuthenticationProcessingException;
+import com.bsf.security.exception.security.oauth.OAuth2AuthenticationProcessingException;
 import com.bsf.security.sec.model.provider.AuthProvider;
 
 import java.util.Map;

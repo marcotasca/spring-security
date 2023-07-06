@@ -1,4 +1,4 @@
-package com.bsf.security.exception.security;
+package com.bsf.security.exception.security.oauth;
 
 import org.springframework.security.core.AuthenticationException;
 

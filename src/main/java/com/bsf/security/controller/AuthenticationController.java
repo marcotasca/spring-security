@@ -1,5 +1,9 @@
-package com.bsf.security.sec.auth;
+package com.bsf.security.controller;
 
+import com.bsf.security.sec.auth.AuthenticationRequest;
+import com.bsf.security.sec.auth.AuthenticationResponse;
+import com.bsf.security.service.auth.AuthenticationServiceImpl;
+import com.bsf.security.sec.auth.RegisterRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,22 +17,22 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AuthenticationController {
 
-    private final AuthenticationService authenticationService;
+    private final AuthenticationServiceImpl authenticationServiceImpl;
 
     @PostMapping("/register")
     public ResponseEntity<Void> register(
             @RequestBody RegisterRequest request, HttpServletRequest httpRequest
     ) {
         String ipAddress = httpRequest.getRemoteAddr();
-        authenticationService.register(request, ipAddress);
+        authenticationServiceImpl.register(request, ipAddress);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/verify/{token}")
-    public ResponseEntity<Void> verify(
+    public ResponseEntity<Void> verifyTokenRegistration(
             @PathVariable("token") String token
     ) {
-        authenticationService.verify(token);
+        authenticationServiceImpl.verifyTokenRegistration(token);
         return ResponseEntity.noContent().build();
     }
 
@@ -37,12 +41,12 @@ public class AuthenticationController {
             @RequestBody AuthenticationRequest request, HttpServletRequest httpRequest
     ) {
         String ipAddress = httpRequest.getRemoteAddr();
-        return ResponseEntity.ok(authenticationService.authenticate(request, ipAddress));
+        return ResponseEntity.ok(authenticationServiceImpl.authenticate(request, ipAddress));
     }
 
     @PostMapping("/refresh-token")
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        authenticationService.refreshToken(request, response);
+        authenticationServiceImpl.refreshToken(request, response);
     }
 
     // TODO: Crea un endpoint verify-email per verificare l'email inviata per email

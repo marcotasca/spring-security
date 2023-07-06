@@ -1,11 +1,17 @@
-package com.bsf.security.sec.auth;
+package com.bsf.security.service.auth;
 
 import com.bsf.security.exception._common.BTExceptionName;
+import com.bsf.security.exception.account.AccountNotFoundException;
 import com.bsf.security.exception.account.DuplicateAccountException;
 import com.bsf.security.exception.account.PasswordsDoNotMatchException;
+import com.bsf.security.exception.security.auth.VerifyTokenRegistrationException;
+import com.bsf.security.sec.auth.AuthenticationRequest;
+import com.bsf.security.sec.auth.AuthenticationResponse;
+import com.bsf.security.sec.auth.RegisterRequest;
 import com.bsf.security.sec.config.JwtService;
 import com.bsf.security.sec.model.account.*;
 import com.bsf.security.sec.model.provider.AuthProvider;
+import com.bsf.security.service.account.AccountService;
 import com.bsf.security.service.auth.provider.ProviderService;
 import com.bsf.security.sec.model.token.*;
 import com.bsf.security.service.auth.token.TokenService;
@@ -27,7 +33,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class AuthenticationService {
+public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AccountRepository accountRepository;
 
@@ -43,6 +49,9 @@ public class AuthenticationService {
 
     private final ProviderService providerService;
 
+    private final AccountService accountService;
+
+    @Override
     public void register(RegisterRequest request, String ipAddress) {
         // Controllo che l'account non esista già
         var duplicateAccount = accountRepository.findByEmail(request.getEmail());
@@ -89,28 +98,38 @@ public class AuthenticationService {
 
     }
 
-    public void verify(String tokenVerify) {
+    @Override
+    public void verifyTokenRegistration(String registrationToken) {
         // Estraggo lo username dal token
-        String username = jwtService.extractUsername(tokenVerify);
+        String username = jwtService.extractUsername(registrationToken);
 
-        // Se lo username non è nullo
-        if(username != null) {
+        // Se lo username è nullo sollevo un'eccezione
+        if(username == null) throw new VerifyTokenRegistrationException();
 
-            // Recupero l'utente dal database
-            var account = this.accountRepository.findByEmail(username).orElseThrow();
+        // Recupero l'utente dal database
+        var account = accountService
+                .findByEmail(username)
+                .orElseThrow(() -> new AccountNotFoundException(BTExceptionName.ACCOUNT_NOT_FOUND.name()));
 
-            // Controllo che il token sia valido
-            if (jwtService.isValidToken(tokenVerify, account)) {
-                Optional<Token> token = tokenRepository.findByAccountIdAndTokenScopeCategoryId(
-                        account.getId(), TokenScopeCategoryEnum.BTD_REGISTRATION.getTokenScopeCategoryId()
-                );
+        // Controllo che il token sia valido altrimenti sollevo un'eccezione
+        if (!jwtService.isValidToken(registrationToken, account)) throw new VerifyTokenRegistrationException();
 
-                System.out.println(token);
-            }
-        }
+        // Recupero il token in base all'account ID e allo scopo di registrazione
+        Optional<Token> token = tokenService.findByAccountIdAndTokenScopeCategoryId(
+                account.getId(), TokenScopeCategoryEnum.BTD_REGISTRATION.getTokenScopeCategoryId()
+        );
 
+        // Se il token è presente e uguale a quello che mi è arrivato
+        if(token.isEmpty() || !token.get().getAccessToken().equals(registrationToken))
+            throw new VerifyTokenRegistrationException();
+
+        account.setStatus(new AccountStatus(AccountStatusEnum.Enabled.getStatusId()));
+        accountService.save(account);
+
+        tokenService.delete(token.get());
     }
 
+    @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request, String ipAddress) {
         // Se non corretto AuthenticationManager si occupa già di sollevare eccezioni
         authenticationManager.authenticate(
@@ -159,25 +178,8 @@ public class AuthenticationService {
                 .build();
     }
 
-    private void revokeAllUserTokens(Account account) {
-        // Recupero tutti i token validi dello user
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(account.getId());
-
-        // Se non ce ne sono esco dalla funzione
-        if(validUserTokens.isEmpty()) return;
-
-        // Revoco ogni token dell'utente
-        validUserTokens.forEach(token -> {
-            // TODO: delete token
-//            token.setExpired(true);
-//            token.setRevoked(true);
-        });
-
-        // Salvo  i token
-        tokenRepository.saveAll(validUserTokens);
-    }
-
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @Override
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
         // Recupero header di autorizzazione
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
@@ -230,11 +232,34 @@ public class AuthenticationService {
                         .build();
 
                 // Scrivo dentro lo stream di HttpServletResponse la risposta appena generata
-                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+                try {
+                    new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
         }
 
+    }
+
+    @Override
+    public void revokeAllUserTokens(Account account) {
+        // Recupero tutti i token validi dello user
+        var validUserTokens = tokenRepository.findAllValidTokenByUser(account.getId());
+
+        // Se non ce ne sono esco dalla funzione
+        if(validUserTokens.isEmpty()) return;
+
+        // Revoco ogni token dell'utente
+        validUserTokens.forEach(token -> {
+            // TODO: delete token
+//            token.setExpired(true);
+//            token.setRevoked(true);
+        });
+
+        // Salvo  i token
+        tokenRepository.saveAll(validUserTokens);
     }
 
 }

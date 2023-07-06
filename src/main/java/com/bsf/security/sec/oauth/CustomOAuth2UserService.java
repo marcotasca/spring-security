@@ -1,6 +1,6 @@
 package com.bsf.security.sec.oauth;
 
-import com.bsf.security.exception.security.OAuth2AuthenticationProcessingException;
+import com.bsf.security.exception.security.oauth.OAuth2AuthenticationProcessingException;
 import com.bsf.security.sec.model.provider.AuthProvider;
 import com.bsf.security.sec.model.account.*;
 import com.bsf.security.service.auth.provider.ProviderService;
