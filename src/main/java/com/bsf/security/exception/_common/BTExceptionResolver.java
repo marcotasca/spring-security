@@ -45,15 +45,22 @@ public class BTExceptionResolver {
         return new ResponseEntity<>(new BTExceptionResponse(errorMessage, httpStatus), httpStatus);
     }
 
-    public ResponseEntity<List<BTExceptionResponse>> resolvePasswordValidationBTException(
+    public ResponseEntity<BTExceptionResponseList> resolvePasswordValidationBTException(
             InvalidPasswordAccountListException ex, Locale locale, HttpStatus httpStatus
     ) {
-        List<BTExceptionResponse> exceptionResponseList = new ArrayList<>();
+        List<String> messages = new ArrayList<>();
         ex.getExceptions().forEach(btException -> {
             String errorMessage = validationMessageSource.getMessage(btException.getMessage(), btException.getArgs(), locale);
-            exceptionResponseList.add(new BTExceptionResponse(errorMessage, httpStatus));
+            messages.add(errorMessage);
         });
-        return new ResponseEntity<>(exceptionResponseList, httpStatus);
+        return new ResponseEntity<>(new BTExceptionResponseList(messages, httpStatus), httpStatus);
+    }
+
+    public ResponseEntity<BTExceptionResponse> resolveValidationBTException(
+            BTException ex, Locale locale, HttpStatus httpStatus
+    ) {
+        String errorMessage = validationMessageSource.getMessage(ex.getMessage(), ex.getArgs(), locale);
+        return new ResponseEntity<>(new BTExceptionResponse(errorMessage, httpStatus), httpStatus);
     }
 
 }

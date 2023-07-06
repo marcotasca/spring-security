@@ -50,7 +50,7 @@ public class MessageSourceConfiguration implements WebMvcConfigurer {
     public MessageSource businessMessageSource() {
         ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
         messageSource.setBasenames(
-                "classpath:/messages/exception/account/message"
+                "classpath:/messages/business/account/message"
         );
         messageSource.setDefaultEncoding("utf-8");
         return messageSource;
