@@ -1,4 +1,4 @@
-package com.bsf.security.sec.auth;
+package com.bsf.security.service.auth.token;
 
 import com.bsf.security.sec.config.JwtService;
 import com.bsf.security.sec.model.account.Account;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 
 @Service
-public class TokenService {
+public class TokenServiceImpl implements TokenService {
 
     @Autowired
     JwtService jwtService;
@@ -25,22 +25,26 @@ public class TokenService {
             TokenTypeEnum tokenType,
             TokenScopeCategoryEnum tokenScopeCategoryEnum
     ) {
-        // Estraggo le date di scadenza
+        // Estraggo la data di scadenza
         Date accessTokenExpiration = jwtService.extractExpiration(accessToken);
-        Date refreshTokenExpiration = jwtService.extractExpiration(refreshToken);
 
         // Creo il token per l'utente
         var token = Token
                 .builder()
                 .account(account)
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .tokenType(new TokenType(tokenType.getTokenTypeId()))
                 .accessTokenExpiration(accessTokenExpiration)
-                .refreshTokenExpiration(refreshTokenExpiration)
                 .tokenScopeCategory(new TokenScopeCategory(tokenScopeCategoryEnum.getTokenScopeCategoryId()))
                 .ipAddress(ipAddress)
                 .build();
+
+        // Imposto il refresh token se non nullo
+        if(refreshToken != null) {
+            Date refreshTokenExpiration = jwtService.extractExpiration(refreshToken);
+            token.setRefreshToken(refreshToken);
+            token.setRefreshTokenExpiration(refreshTokenExpiration);
+        }
 
         // Salvo il token per l'utente
         tokenRepository.save(token);
