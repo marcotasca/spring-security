@@ -40,5 +40,7 @@ application:
       expiration: 86400000 # 1 day
       refresh-token:
         expiration: 604800000 # 7 days
+      registration-token:
+        expiration: 864000000 # 10 days
   authorizedRedirectUris:
     - http://localhost:3000/oauth2/redirect
