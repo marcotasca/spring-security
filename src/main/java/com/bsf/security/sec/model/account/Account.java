@@ -108,8 +108,7 @@ public class Account implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        //return status.getName().equals(AccountStatusEnum.Enabled.name());
-        return true;
+        return status.getName().equals(AccountStatusEnum.Enabled.name());
     }
 
 }
