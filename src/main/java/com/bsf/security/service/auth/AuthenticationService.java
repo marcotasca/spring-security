@@ -12,5 +12,5 @@ public interface AuthenticationService {
     void verifyTokenRegistration(String registrationToken);
     AuthenticationResponse authenticate(AuthenticationRequest request, String ipAddress);
     void refreshToken(HttpServletRequest request, HttpServletResponse response);
-    void revokeAllUserTokens(Account account);
+    void revokeAllAccountTokens(Account account);
 }

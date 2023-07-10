@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -59,6 +60,11 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public void delete(Token token) {
         tokenRepository.delete(token);
+    }
+
+    @Override
+    public List<Token> findAllValidTokenByUser(Integer accountId) {
+        return tokenRepository.findAllByAccountId(accountId);
     }
 
 }

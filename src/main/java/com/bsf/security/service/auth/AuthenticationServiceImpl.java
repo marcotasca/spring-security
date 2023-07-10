@@ -123,9 +123,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if(token.isEmpty() || !token.get().getAccessToken().equals(registrationToken))
             throw new VerifyTokenRegistrationException();
 
+        // Abilito l'account
         account.setStatus(new AccountStatus(AccountStatusEnum.Enabled.getStatusId()));
         accountService.save(account);
 
+        // Elimino il token di registrazione
         tokenService.delete(token.get());
     }
 
@@ -144,21 +146,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .orElseThrow();
 
         // Creo un token con i dati dell'utente creato
-        // TODO: Rendilo disponibile per tutti, la firma di generateToken dovrà avere lo User e non UserDetails
-        // TODO: iss prendilo come nome da application.yml, non portare first e last name, crea un path per l'utente
-//        HashMap<String, Object> extraClaims = new HashMap<>() {{
-//            put("iss", "Biotekna Plus");
-//            put("given_name", user.getFirstname());
-//            put("family_name", user.getLastname());
-//            put("roles", user.getAuthorities());
-//        }};
-        var accessToken = jwtService.generateToken(new HashMap<>(), user);
+        var accessToken = jwtService.generateToken(user);
 
         // Creo il token di refresh
         var refreshToken = jwtService.generateRefreshToken(user);
 
         // Revoca tutti i token dello user
-        revokeAllUserTokens(user);
+        revokeAllAccountTokens(user);
 
         // Salva il token dell'utente
         tokenService.saveUserToken(
@@ -212,7 +206,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 var currentRefreshToken = jwtService.generateRefreshToken(user);
 
                 // Revoco tutti i token dell'utente
-                revokeAllUserTokens(user);
+                revokeAllAccountTokens(user);
 
                 // Salvo il token dell'utente
                 String ipAddress = request.getRemoteAddr();
@@ -244,22 +238,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public void revokeAllUserTokens(Account account) {
-        // Recupero tutti i token validi dello user
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(account.getId());
+    public void revokeAllAccountTokens(Account account) {
+        // Recupero tutti i token validi dell'account
+        var validAccountTokens = tokenService.findAllValidTokenByUser(account.getId());
 
         // Se non ce ne sono esco dalla funzione
-        if(validUserTokens.isEmpty()) return;
+        if(validAccountTokens.isEmpty()) return;
 
         // Revoco ogni token dell'utente
-        validUserTokens.forEach(token -> {
-            // TODO: delete token
-//            token.setExpired(true);
-//            token.setRevoked(true);
-        });
-
-        // Salvo  i token
-        tokenRepository.saveAll(validUserTokens);
+        validAccountTokens.forEach(tokenService::delete);
     }
 
 }

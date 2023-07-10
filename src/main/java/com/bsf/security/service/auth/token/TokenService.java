@@ -5,6 +5,7 @@ import com.bsf.security.sec.model.token.Token;
 import com.bsf.security.sec.model.token.TokenScopeCategoryEnum;
 import com.bsf.security.sec.model.token.TokenTypeEnum;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TokenService {
@@ -21,5 +22,7 @@ public interface TokenService {
     );
 
     void delete(Token token);
+
+    List<Token> findAllValidTokenByUser(Integer accountId);
 
 }
