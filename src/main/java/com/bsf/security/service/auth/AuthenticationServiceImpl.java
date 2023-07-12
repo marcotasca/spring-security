@@ -152,7 +152,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var refreshToken = jwtService.generateRefreshToken(user);
 
         // Revoca tutti i token dello user
-        revokeAllAccountTokens(user);
+        tokenService.revokeAllAccountTokens(user);
 
         // Salva il token dell'utente
         tokenService.saveUserToken(
@@ -206,7 +206,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 var currentRefreshToken = jwtService.generateRefreshToken(user);
 
                 // Revoco tutti i token dell'utente
-                revokeAllAccountTokens(user);
+                tokenService.revokeAllAccountTokens(user);
 
                 // Salvo il token dell'utente
                 String ipAddress = request.getRemoteAddr();
@@ -235,18 +235,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         }
 
-    }
-
-    @Override
-    public void revokeAllAccountTokens(Account account) {
-        // Recupero tutti i token validi dell'account
-        var validAccountTokens = tokenService.findAllValidTokenByUser(account.getId());
-
-        // Se non ce ne sono esco dalla funzione
-        if(validAccountTokens.isEmpty()) return;
-
-        // Revoco ogni token dell'utente
-        validAccountTokens.forEach(tokenService::delete);
     }
 
 }

@@ -10,9 +10,11 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,7 +24,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Entity
 @Table(name = "account")
-public class Account implements UserDetails {
+public class Account implements UserDetails, OAuth2User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,6 +68,14 @@ public class Account implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "fk_provider_id")
     )
     Set<Provider> providers;
+
+    @Transient
+    private Map<String, Object> attributes;
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return this.attributes;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -111,4 +121,8 @@ public class Account implements UserDetails {
         return status.getName().equals(AccountStatusEnum.Enabled.name());
     }
 
+    @Override
+    public String getName() {
+        return getEmail();
+    }
 }

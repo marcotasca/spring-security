@@ -24,5 +24,6 @@ public interface TokenService {
     void delete(Token token);
 
     List<Token> findAllValidTokenByUser(Integer accountId);
+    void revokeAllAccountTokens(Account account);
 
 }

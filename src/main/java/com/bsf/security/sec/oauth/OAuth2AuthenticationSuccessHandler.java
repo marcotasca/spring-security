@@ -57,24 +57,28 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     }
 
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-        Optional<String> redirectUri = CookieUtils.getCookie(request, HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
+        Optional<String> redirectUri = CookieUtils
+                .getCookie(request, HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME)
                 .map(Cookie::getValue);
-
-        System.out.println(redirectUri);
 
         if(redirectUri.isPresent() && !isAuthorizedRedirectUri(redirectUri.get())) {
             throw new RuntimeException("Sorry! We've got an Unauthorized Redirect URI and can't proceed with the authentication");
         }
 
         String targetUrl = redirectUri.orElse(getDefaultTargetUrl());
-
         String token = jwtService.generateToken((UserDetails) authentication.getPrincipal());
 
-        accountRepository.findByEmail(
-                ((UserDetails) authentication.getPrincipal()).getUsername()
-        ).ifPresent(account -> tokenService.saveUserToken(
-                account, token, token, request.getRemoteAddr(), TokenTypeEnum.BEARER, TokenScopeCategoryEnum.BTD_REGISTRATION
-        ));
+        accountRepository.findByEmail(((UserDetails) authentication.getPrincipal()).getUsername()).ifPresent(account -> {
+            tokenService.revokeAllAccountTokens(account);
+            tokenService.saveUserToken(
+                    account,
+                    token,
+                    token,
+                    request.getRemoteAddr(),
+                    TokenTypeEnum.BEARER,
+                    TokenScopeCategoryEnum.BTD_RW
+            );
+        });
 
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("token", token)

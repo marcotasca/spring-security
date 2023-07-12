@@ -5,6 +5,8 @@ import com.bsf.security.sec.model.account.Account;
 import java.util.Optional;
 
 public interface AccountService {
+    Optional<Account> findById(int accountId);
     Optional<Account> findByEmail(String email);
     Account save(Account account);
+    void enableAccount(int accountId);
 }

@@ -67,4 +67,16 @@ public class TokenServiceImpl implements TokenService {
         return tokenRepository.findAllByAccountId(accountId);
     }
 
+    @Override
+    public void revokeAllAccountTokens(Account account) {
+        // Recupero tutti i token validi dell'account
+        var validAccountTokens = findAllValidTokenByUser(account.getId());
+
+        // Se non ce ne sono esco dalla funzione
+        if(validAccountTokens.isEmpty()) return;
+
+        // Revoco ogni token dell'utente
+        validAccountTokens.forEach(this::delete);
+    }
+
 }
