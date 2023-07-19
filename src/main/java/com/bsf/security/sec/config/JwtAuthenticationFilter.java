@@ -65,9 +65,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Recupero l'utente dal database in base allo username
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-            // Controllo che il token non sia scaduto o revocato
+            // Controllo che il token non sia scaduto
             Optional<Token> accessToken = tokenRepository.findByAccessToken(jwt);
-            System.out.println(accessToken.get().getAccessToken());
+
             var isValidToken = accessToken
                     .map(t -> !t.isExpired())
                     .orElse(false);
