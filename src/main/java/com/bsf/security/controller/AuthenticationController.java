@@ -1,5 +1,6 @@
 package com.bsf.security.controller;
 
+import com.bsf.security.event.auth.OnRegistrationEvent;
 import com.bsf.security.sec.auth.AuthenticationRequest;
 import com.bsf.security.sec.auth.AuthenticationResponse;
 import com.bsf.security.service.auth.AuthenticationServiceImpl;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +30,7 @@ public class AuthenticationController {
     public ResponseEntity<Void> register(
             @RequestBody RegisterRequest request, HttpServletRequest httpRequest
     ) {
-        authenticationServiceImpl.register(request, utilService.getClientIP(httpRequest));
+        authenticationServiceImpl.register(request, utilService.getClientIP(httpRequest), utilService.getAppUrl(httpRequest));
         return ResponseEntity.noContent().build();
     }
 

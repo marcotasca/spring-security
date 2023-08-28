@@ -34,6 +34,7 @@ spring:
     database-platform: org.hibernate.dialect.MariaDBDialect
 
 application:
+  name: Biotekna Doctor
   security:
     jwt:
       secret-key: 6150645367566B58703273357638792F423F4528482B4D6251655468576D5A71
@@ -44,3 +45,18 @@ application:
         expiration: 864000000 # 10 days
   authorizedRedirectUris:
     - http://localhost:3000/oauth2/redirect
+  email:
+    host: ${EMAIL_HOST}
+    port: 587
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    protocol: smtp
+    smtp:
+      auth: true
+      starttls:
+        enable: true
+    debug: false
+    no-reply: noreply@biotekna.com
+  support:
+    phone: 1234567890
+    email: support@doctor.biotekna.com

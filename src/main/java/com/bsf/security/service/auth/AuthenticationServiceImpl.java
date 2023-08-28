@@ -1,5 +1,7 @@
 package com.bsf.security.service.auth;
 
+import com.bsf.security.event.auth.OnRegistrationCompletedEvent;
+import com.bsf.security.event.auth.OnRegistrationEvent;
 import com.bsf.security.exception._common.BTExceptionName;
 import com.bsf.security.exception.account.AccountNotFoundException;
 import com.bsf.security.exception.account.DuplicateAccountException;
@@ -15,18 +17,26 @@ import com.bsf.security.service.account.AccountService;
 import com.bsf.security.service.auth.provider.ProviderService;
 import com.bsf.security.sec.model.token.*;
 import com.bsf.security.service.auth.token.TokenService;
+import com.bsf.security.service.email.EmailService;
+import com.bsf.security.util.UtilService;
 import com.bsf.security.validation.password.PasswordConstraintValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Optional;
@@ -51,8 +61,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AccountService accountService;
 
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Transactional
     @Override
-    public void register(RegisterRequest request, String ipAddress) {
+    public void register(RegisterRequest request, String ipAddress, String appUrl) {
         // Controllo che l'account non esista già
         var duplicateAccount = accountRepository.findByEmail(request.getEmail());
         if(duplicateAccount.isPresent())
@@ -94,7 +107,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 TokenScopeCategoryEnum.BTD_REGISTRATION
         );
 
-        // TODO: Invia l'email
+        // Invio un evento quando viene completata la registrazione
+        eventPublisher.publishEvent(new OnRegistrationEvent(this, savedAccount, accessToken, appUrl));
 
     }
 
@@ -129,6 +143,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Elimino il token di registrazione
         tokenService.delete(token.get());
+
+        // Invio un evento quando viene confermata la registrazione
+        eventPublisher.publishEvent(new OnRegistrationCompletedEvent(this, account));
+
     }
 
     @Override

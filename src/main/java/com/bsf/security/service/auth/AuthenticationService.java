@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public interface AuthenticationService {
-    void register(RegisterRequest request, String ipAddress);
+    void register(RegisterRequest request, String ipAddress, String appUrl);
     void verifyTokenRegistration(String registrationToken);
     AuthenticationResponse authenticate(AuthenticationRequest request, String ipAddress);
     void refreshToken(HttpServletRequest request, HttpServletResponse response);
