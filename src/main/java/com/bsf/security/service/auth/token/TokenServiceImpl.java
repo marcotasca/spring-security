@@ -24,7 +24,7 @@ public class TokenServiceImpl implements TokenService {
         return tokenRepository.findByAccountIdAndTokenScopeCategoryId(accountId, tokenScopeCategoryId);
     }
 
-    public void saveUserToken(
+    public Token saveUserToken(
             Account account,
             String accessToken,
             String refreshToken,
@@ -54,7 +54,7 @@ public class TokenServiceImpl implements TokenService {
         }
 
         // Salvo il token per l'utente
-        tokenRepository.save(token);
+        return tokenRepository.save(token);
     }
 
     @Override

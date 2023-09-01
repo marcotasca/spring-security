@@ -12,7 +12,7 @@ public interface TokenService {
 
     Optional<Token> findByAccountIdAndTokenScopeCategoryId(int accountId, int tokenScopeCategoryId);
 
-    void saveUserToken(
+    Token saveUserToken(
             Account account,
             String accessToken,
             String refreshToken,

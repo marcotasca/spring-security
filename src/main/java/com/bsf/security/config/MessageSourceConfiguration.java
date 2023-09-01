@@ -59,8 +59,9 @@ public class MessageSourceConfiguration implements WebMvcConfigurer {
     @Bean
     public MessageSource validationMessageSource() {
         ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
-        messageSource.setBasename(
-                "classpath:/messages/validation/password/message"
+        messageSource.setBasenames(
+                "classpath:/messages/validation/password/message",
+                "classpath:/messages/validation/email/message"
         );
         messageSource.setDefaultEncoding("utf-8");
         return messageSource;

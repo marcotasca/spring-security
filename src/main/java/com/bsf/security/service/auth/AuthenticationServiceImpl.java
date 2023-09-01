@@ -5,6 +5,7 @@ import com.bsf.security.event.auth.OnRegistrationEvent;
 import com.bsf.security.exception._common.BTExceptionName;
 import com.bsf.security.exception.account.AccountNotFoundException;
 import com.bsf.security.exception.account.DuplicateAccountException;
+import com.bsf.security.exception.account.InvalidEmailAccountException;
 import com.bsf.security.exception.account.PasswordsDoNotMatchException;
 import com.bsf.security.exception.security.auth.VerifyTokenRegistrationException;
 import com.bsf.security.sec.auth.AuthenticationRequest;
@@ -19,6 +20,7 @@ import com.bsf.security.sec.model.token.*;
 import com.bsf.security.service.auth.token.TokenService;
 import com.bsf.security.service.email.EmailService;
 import com.bsf.security.util.UtilService;
+import com.bsf.security.validation.email.EmailConstraintValidator;
 import com.bsf.security.validation.password.PasswordConstraintValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -70,6 +72,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var duplicateAccount = accountRepository.findByEmail(request.getEmail());
         if(duplicateAccount.isPresent())
             throw new DuplicateAccountException(BTExceptionName.AUTH_REGISTRATION_DUPLICATE_USERNAME_ACCOUNT.name());
+
+        // Controllo che l'email abbia un formato valido
+        if(!EmailConstraintValidator.isValid(request.getEmail()))
+            throw new InvalidEmailAccountException(BTExceptionName.INVALID_EMAIL.name());
 
         // Controllo che la password soddisfi i requisiti minimi
         PasswordConstraintValidator.isValid(request.getPassword());
@@ -151,6 +157,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request, String ipAddress) {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
         // Se non corretto AuthenticationManager si occupa già di sollevare eccezioni
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -173,7 +185,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         tokenService.revokeAllAccountTokens(user);
 
         // Salva il token dell'utente
-        tokenService.saveUserToken(
+        Token token = tokenService.saveUserToken(
                 user,
                 accessToken,
                 refreshToken,
@@ -186,7 +198,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return AuthenticationResponse
                 .builder()
                 .accessToken(accessToken)
+                .accessTokenExpirationDate(token.getAccessTokenExpiration())
                 .refreshToken(refreshToken)
+                .refreshTokenExpirationDate(token.getAccessTokenExpiration())
                 .build();
     }
 
