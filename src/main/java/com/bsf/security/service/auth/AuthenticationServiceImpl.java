@@ -3,10 +3,8 @@ package com.bsf.security.service.auth;
 import com.bsf.security.event.auth.OnRegistrationCompletedEvent;
 import com.bsf.security.event.auth.OnRegistrationEvent;
 import com.bsf.security.exception._common.BTExceptionName;
-import com.bsf.security.exception.account.AccountNotFoundException;
-import com.bsf.security.exception.account.DuplicateAccountException;
-import com.bsf.security.exception.account.InvalidEmailAccountException;
-import com.bsf.security.exception.account.PasswordsDoNotMatchException;
+import com.bsf.security.exception.account.*;
+import com.bsf.security.exception.security.auth.AuthException;
 import com.bsf.security.exception.security.auth.VerifyTokenRegistrationException;
 import com.bsf.security.sec.auth.AuthenticationRequest;
 import com.bsf.security.sec.auth.AuthenticationResponse;
@@ -37,6 +35,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
+import javax.naming.AuthenticationException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -162,6 +161,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+
+        // Controllo che l'email e la password non siano vuoti
+        if(request.getEmail() == null) throw new AuthException(BTExceptionName.EMAIL_CAN_NOT_BE_EMPTY.name());
+        if(request.getPassword() == null) throw new AuthException(BTExceptionName.PASSWORD_CAN_NOT_BE_EMPTY.name());
 
         // Se non corretto AuthenticationManager si occupa già di sollevare eccezioni
         authenticationManager.authenticate(

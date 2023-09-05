@@ -35,6 +35,8 @@ spring:
 
 application:
   name: Biotekna Doctor
+  client:
+    domain: http://localhost:3000
   security:
     jwt:
       secret-key: 6150645367566B58703273357638792F423F4528482B4D6251655468576D5A71

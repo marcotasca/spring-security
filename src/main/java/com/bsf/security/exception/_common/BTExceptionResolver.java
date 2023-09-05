@@ -36,6 +36,13 @@ public class BTExceptionResolver {
         log.error("\n[{}] -> {}\nToken: {}", type, ex.getMessage(), token);
     }
 
+    public ResponseEntity<BTExceptionResponse> resolveAuthenticationBTException(
+            BTException ex, Locale locale, HttpStatus httpStatus
+    ) {
+        String errorMessage = authenticationMessageSource.getMessage(ex.getMessage(), ex.getArgs(), locale);
+        return new ResponseEntity<>(new BTExceptionResponse(errorMessage, httpStatus), httpStatus);
+    }
+
     public ResponseEntity<BTExceptionResponse> resolveBusinessBTException(
             BTException ex, Locale locale, HttpStatus httpStatus
     ) {

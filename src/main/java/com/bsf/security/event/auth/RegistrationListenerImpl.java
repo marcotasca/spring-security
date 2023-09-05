@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Component
@@ -35,6 +36,9 @@ public class RegistrationListenerImpl implements RegistrationService {
     @Value("${application.email.no-reply}")
     private String noReply;
 
+    @Value("${application.client.domain}")
+    private String clientDomain;
+
     @Async
     @Override
     @EventListener
@@ -47,10 +51,10 @@ public class RegistrationListenerImpl implements RegistrationService {
             byte[] fileContent = StreamUtils.copyToByteArray(resource.getInputStream());
             text = new String(fileContent, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("[BTDoctor::Error::handleOnRegistrationEvent] at {} -> {}", LocalDateTime.now(), e.getMessage());
         }
 
-        String linkToVerify = event.getAppUrl() + "/api/v1/auth/register/verify/" + event.getRegistrationToken();
+        String linkToVerify = clientDomain + "/auth/register/verify/" + event.getRegistrationToken();
         text = text
                 .replace("{{registration.name}}", event.getAccount().getFirstname())
                 .replace("{{registration.url}}", linkToVerify)
@@ -78,7 +82,7 @@ public class RegistrationListenerImpl implements RegistrationService {
             byte[] fileContent = StreamUtils.copyToByteArray(resource.getInputStream());
             text = new String(fileContent, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("[BTDoctor::Error::handleOnRegistrationEvent] at {} -> {}", LocalDateTime.now(), e.getMessage());
         }
 
         String fullName = event.getAccount().getFirstname() + " " + event.getAccount().getLastname();
