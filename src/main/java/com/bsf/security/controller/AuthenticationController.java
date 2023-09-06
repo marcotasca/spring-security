@@ -38,6 +38,11 @@ public class AuthenticationController {
     public ResponseEntity<Void> verifyTokenRegistration(
             @PathVariable("token") String token
     ) {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         authenticationServiceImpl.verifyTokenRegistration(token);
         return ResponseEntity.noContent().build();
     }
@@ -52,6 +57,13 @@ public class AuthenticationController {
     @PostMapping("/refresh-token")
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         authenticationServiceImpl.refreshToken(request, response);
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<Void> resetPassword(
+            @RequestBody AuthenticationRequest request, HttpServletRequest httpRequest
+    ) {
+        return null;
     }
 
 }

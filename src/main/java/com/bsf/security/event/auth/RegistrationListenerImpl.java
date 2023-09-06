@@ -82,7 +82,7 @@ public class RegistrationListenerImpl implements RegistrationService {
             byte[] fileContent = StreamUtils.copyToByteArray(resource.getInputStream());
             text = new String(fileContent, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            log.error("[BTDoctor::Error::handleOnRegistrationEvent] at {} -> {}", LocalDateTime.now(), e.getMessage());
+            log.error("[BTDoctor::Error::handleOnRegistrationCompletedEvent] at {} -> {}", LocalDateTime.now(), e.getMessage());
         }
 
         String fullName = event.getAccount().getFirstname() + " " + event.getAccount().getLastname();
