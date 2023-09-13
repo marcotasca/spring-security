@@ -11,6 +11,6 @@ public interface AuthenticationService {
     void register(RegisterRequest request, String ipAddress, String appUrl);
     void verifyTokenRegistration(String registrationToken);
     AuthenticationResponse authenticate(AuthenticationRequest request, String ipAddress);
-    void refreshToken(HttpServletRequest request, HttpServletResponse response);
+    AuthenticationResponse refreshToken(HttpServletRequest request, HttpServletResponse response);
 
 }
