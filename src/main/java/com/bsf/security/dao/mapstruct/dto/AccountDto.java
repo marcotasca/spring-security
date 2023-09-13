@@ -1,4 +1,4 @@
-package com.bsf.security.mapstruct.dtos;
+package com.bsf.security.dao.mapstruct.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

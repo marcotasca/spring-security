@@ -1,11 +1,15 @@
 package com.bsf.security.service.account;
 
+import com.bsf.security.exception._common.BTExceptionName;
+import com.bsf.security.exception.account.PasswordsDoNotMatchException;
 import com.bsf.security.sec.model.account.Account;
 import com.bsf.security.sec.model.account.AccountRepository;
 import com.bsf.security.sec.model.account.AccountStatus;
 import com.bsf.security.sec.model.account.AccountStatusEnum;
 import com.bsf.security.service.auth.token.TokenService;
+import com.bsf.security.validation.password.PasswordConstraintValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -18,6 +22,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public Optional<Account> findById(int accountId) {
@@ -40,6 +47,28 @@ public class AccountServiceImpl implements AccountService {
             account.setStatus(new AccountStatus(AccountStatusEnum.Enabled.getStatusId()));
             save(account);
             tokenService.revokeAllAccountTokens(account);
+        });
+    }
+
+    @Override
+    public void editPassword(String email, String password, String confirmPassword) {
+        // Controllo che la password soddisfi i requisiti minimi
+        PasswordConstraintValidator.isValid(password);
+        if (!password.equals(confirmPassword))
+            throw new PasswordsDoNotMatchException(BTExceptionName.AUTH_REGISTRATION_PASSWORDS_DO_NOT_MATCH.name());
+
+        findByEmail(email).ifPresent(account -> {
+            account.setPassword(passwordEncoder.encode(password));
+            save(account);
+        });
+    }
+
+    @Override
+    public void editAccountName(String email, String firstName, String lastName) {
+        findByEmail(email).ifPresent(account -> {
+            account.setFirstname(firstName);
+            account.setLastname(lastName);
+            save(account);
         });
     }
 }
