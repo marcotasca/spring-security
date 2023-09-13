@@ -30,6 +30,11 @@ public class AuthenticationController {
     public ResponseEntity<Void> register(
             @RequestBody RegisterRequest request, HttpServletRequest httpRequest
     ) {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         authenticationServiceImpl.register(request, utilService.getClientIP(httpRequest), utilService.getAppUrl(httpRequest));
         return ResponseEntity.noContent().build();
     }

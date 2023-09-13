@@ -4,6 +4,8 @@ import com.bsf.security.sec.model.account.Account;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 
 @Data
@@ -17,7 +19,7 @@ public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Integer id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "fk_account_id")
@@ -49,8 +51,7 @@ public class Token {
     private String ipAddress;
 
     public boolean isExpired() {
-        return false;
-        //return getAccessTokenExpiration().toInstant().isAfter(LocalDateTime.now().toInstant(ZoneOffset.UTC));
+        return getAccessTokenExpiration().toInstant().isBefore(LocalDateTime.now().toInstant(ZoneOffset.UTC));
     }
 
 }
