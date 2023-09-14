@@ -50,8 +50,12 @@ public class Token {
     @Column(name = "ip_address")
     private String ipAddress;
 
-    public boolean isExpired() {
+    public boolean isAccessTokenExpired() {
         return getAccessTokenExpiration().toInstant().isBefore(LocalDateTime.now().toInstant(ZoneOffset.UTC));
+    }
+
+    public boolean isRefreshTokenExpired() {
+        return getRefreshTokenExpiration().toInstant().isBefore(LocalDateTime.now().toInstant(ZoneOffset.UTC));
     }
 
 }

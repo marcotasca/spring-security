@@ -20,6 +20,16 @@ public class TokenServiceImpl implements TokenService {
     TokenRepository tokenRepository;
 
     @Override
+    public Optional<Token> findByAccessToken(String accessToken) {
+        return tokenRepository.findByAccessToken(accessToken);
+    }
+
+    @Override
+    public Optional<Token> findByRefreshToken(String refreshToken) {
+        return tokenRepository.findByRefreshToken(refreshToken);
+    }
+
+    @Override
     public Optional<Token> findByAccountIdAndTokenScopeCategoryId(int accountId, int tokenScopeCategoryId) {
         return tokenRepository.findByAccountIdAndTokenScopeCategoryId(accountId, tokenScopeCategoryId);
     }

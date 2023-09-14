@@ -1,5 +1,6 @@
 package com.bsf.security.error.security;
 
+import com.bsf.security.exception._common.BTException;
 import com.bsf.security.exception._common.BTExceptionResolver;
 import com.bsf.security.exception._common.BTExceptionResponse;
 import com.bsf.security.exception.security.auth.AuthException;
@@ -28,8 +29,8 @@ public class SecurityErrorAdvice {
     @ExceptionHandler({
             VerifyTokenRegistrationException.class, InvalidJWTTokenException.class
     })
-    public ResponseEntity<Void> handleVerifyTokenRegistrationException(VerifyTokenRegistrationException ex, Locale locale) {
-        log.info("[EXCEPTION] ({}) -> {}", VerifyTokenRegistrationException.class.getName(), LocalDateTime.now());
+    public ResponseEntity<Void> handleVerifyTokenRegistrationException(BTException ex, Locale locale) {
+        log.info("[EXCEPTION] ({}) -> {}", BTException.class.getName(), LocalDateTime.now());
         return ResponseEntity.badRequest().build();
     }
 

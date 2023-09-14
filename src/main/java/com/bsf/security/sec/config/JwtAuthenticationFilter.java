@@ -1,9 +1,5 @@
 package com.bsf.security.sec.config;
 
-import com.bsf.security.exception._common.BTExceptionName;
-import com.bsf.security.exception._common.BTExceptionResolver;
-import com.bsf.security.exception.account.AccountNotFoundException;
-import com.bsf.security.exception.security.auth.AuthException;
 import com.bsf.security.sec.model.token.Token;
 import com.bsf.security.sec.model.token.TokenRepository;
 import jakarta.servlet.FilterChain;
@@ -15,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,7 +18,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -80,11 +74,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // Controllo che il token non sia scaduto
+            // Recupero il token
             Optional<Token> accessToken = tokenRepository.findByAccessToken(jwt);
 
+            // Controllo che il token sia presente
+            if(accessToken.isEmpty()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // Controllo che il token non sia scaduto
             var isValidToken = accessToken
-                    .map(t -> !t.isExpired())
+                    .map(t -> !t.isAccessTokenExpired())
                     .orElse(false);
 
             // Controllo che il token inviato sia valido

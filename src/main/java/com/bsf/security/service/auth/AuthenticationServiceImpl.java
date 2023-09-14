@@ -17,7 +17,6 @@ import com.bsf.security.sec.config.JwtService;
 import com.bsf.security.sec.model.account.*;
 import com.bsf.security.sec.model.provider.AuthProvider;
 import com.bsf.security.sec.model.token.Token;
-import com.bsf.security.sec.model.token.TokenRepository;
 import com.bsf.security.sec.model.token.TokenScopeCategoryEnum;
 import com.bsf.security.sec.model.token.TokenTypeEnum;
 import com.bsf.security.service.account.AccountService;
@@ -43,15 +42,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
 
-    private final AccountRepository accountRepository;
-
     private final PasswordEncoder passwordEncoder;
 
     private final JwtService jwtService;
 
     private final AuthenticationManager authenticationManager;
-
-    private final TokenRepository tokenRepository;
 
     private final TokenService tokenService;
 
@@ -65,7 +60,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public void register(RegisterRequest request, String ipAddress, String appUrl) {
         // Controllo che l'account non esista già
-        var duplicateAccount = accountRepository.findByEmail(request.getEmail());
+        var duplicateAccount = accountService.findByEmail(request.getEmail());
         if (duplicateAccount.isPresent())
             throw new DuplicateAccountException(BTExceptionName.AUTH_REGISTRATION_DUPLICATE_USERNAME_ACCOUNT.name());
 
@@ -91,7 +86,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
 
         // Salvo l'utente appena creato
-        var savedAccount = accountRepository.save(user);
+        var savedAccount = accountService.save(user);
 
         // Salvo il provider collegato all'account
         providerService.addProviderToAccount(AuthProvider.LOCAL.getProviderId(), savedAccount.getId());
@@ -172,7 +167,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         );
 
         // Se arrivato a questo punto significa che l'utente è corretto quindi recuperiamolo
-        var user = accountRepository.findByEmail(request.getEmail())
+        var user = accountService.findByEmail(request.getEmail())
                 .orElseThrow();
 
         // Creo un token con i dati dell'utente creato
@@ -221,6 +216,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Recupero il token alla settima posizione che è la lunghezza della parola chiave "Bearer "
         refreshToken = authHeader.substring(7);
 
+        System.out.println("JWT Refresh -> {" + refreshToken + "}");
+
         // Estraggo lo username dal token
         userEmail = jwtService.extractUsername(refreshToken);
 
@@ -228,10 +225,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (userEmail == null) throw new AccountNotFoundException(BTExceptionName.ACCOUNT_NOT_FOUND.name());
 
         // Recupero l'utente dal database
-        var user = this.accountRepository.findByEmail(userEmail).orElseThrow();
+        var user = accountService.findByEmail(userEmail).orElseThrow();
+
+        // Recupero il token
+        Optional<Token> optionalToken = tokenService.findByRefreshToken(refreshToken);
+
+        System.out.println(optionalToken);
+
+        // Controllo che il token sia presente
+        if(optionalToken.isEmpty()) {
+            throw new InvalidJWTTokenException();
+        }
+
+        // Controllo che il token non sia scaduto
+        var isValidToken = optionalToken
+                .map(t -> !t.isRefreshTokenExpired())
+                .orElse(false);
 
         // Controllo il token
-        if (!jwtService.isValidToken(refreshToken, user)) throw new InvalidJWTTokenException();
+        if (!jwtService.isValidToken(refreshToken, user) && isValidToken) throw new InvalidJWTTokenException();
 
         // Genero il token di accesso
         var accessToken = jwtService.generateToken(user);
@@ -256,9 +268,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Creo la risposta da inviare
         return AuthenticationResponse
                 .builder()
-                .accessToken(accessToken)
+                .accessToken(token.getAccessToken())
                 .accessTokenExpirationDate(token.getAccessTokenExpiration())
-                .refreshToken(refreshToken)
+                .refreshToken(token.getRefreshToken())
                 .refreshTokenExpirationDate(token.getAccessTokenExpiration())
                 .build();
 

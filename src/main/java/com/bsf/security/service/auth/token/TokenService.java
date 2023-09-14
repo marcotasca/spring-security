@@ -10,6 +10,9 @@ import java.util.Optional;
 
 public interface TokenService {
 
+    Optional<Token> findByAccessToken(String accessToken);
+    Optional<Token> findByRefreshToken(String refreshToken);
+
     Optional<Token> findByAccountIdAndTokenScopeCategoryId(int accountId, int tokenScopeCategoryId);
 
     Token saveUserToken(
