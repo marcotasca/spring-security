@@ -230,8 +230,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Recupero il token
         Optional<Token> optionalToken = tokenService.findByRefreshToken(refreshToken);
 
-        System.out.println(optionalToken);
-
         // Controllo che il token sia presente
         if(optionalToken.isEmpty()) {
             throw new InvalidJWTTokenException();
@@ -242,8 +240,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .map(t -> !t.isRefreshTokenExpired())
                 .orElse(false);
 
+        System.out.println(isValidToken);
+        System.out.println(!jwtService.isValidToken(refreshToken, user));
+
         // Controllo il token
-        if (!jwtService.isValidToken(refreshToken, user) && isValidToken) throw new InvalidJWTTokenException();
+        if (!jwtService.isValidToken(refreshToken, user) || !isValidToken) throw new InvalidJWTTokenException();
 
         // Genero il token di accesso
         var accessToken = jwtService.generateToken(user);

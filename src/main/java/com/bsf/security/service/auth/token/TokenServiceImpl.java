@@ -42,6 +42,9 @@ public class TokenServiceImpl implements TokenService {
             TokenTypeEnum tokenType,
             TokenScopeCategoryEnum tokenScopeCategoryEnum
     ) {
+        // Prima di crearlo elimino tutti i token
+        revokeAllAccountTokens(account);
+
         // Estraggo la data di scadenza
         Date accessTokenExpiration = jwtService.extractExpiration(accessToken);
 

@@ -2,6 +2,7 @@ package com.bsf.security.sec.config;
 
 import com.bsf.security.sec.model.token.Token;
 import com.bsf.security.sec.model.token.TokenRepository;
+import com.bsf.security.service.auth.token.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserDetailsService userDetailsService;
 
-    private final TokenRepository tokenRepository;
+    private final TokenService tokenService;
 
     @Override
     protected void doFilterInternal(
@@ -75,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             // Recupero il token
-            Optional<Token> accessToken = tokenRepository.findByAccessToken(jwt);
+            Optional<Token> accessToken = tokenService.findByAccessToken(jwt);
 
             // Controllo che il token sia presente
             if(accessToken.isEmpty()) {
