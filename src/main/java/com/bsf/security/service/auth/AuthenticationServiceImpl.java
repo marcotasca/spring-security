@@ -240,9 +240,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .map(t -> !t.isRefreshTokenExpired())
                 .orElse(false);
 
-        System.out.println(isValidToken);
-        System.out.println(!jwtService.isValidToken(refreshToken, user));
-
         // Controllo il token
         if (!jwtService.isValidToken(refreshToken, user) || !isValidToken) throw new InvalidJWTTokenException();
 
