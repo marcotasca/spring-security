@@ -51,4 +51,16 @@ public class AccountErrorAdvice {
         return btExceptionResolver.resolvePasswordValidationBTException(ex, locale, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler({FirstNameEmptyException.class})
+    public ResponseEntity<BTExceptionResponse> handleFirstNameEmptyException(FirstNameEmptyException ex, Locale locale) {
+        log.info("[EXCEPTION] ({}) -> {}", FirstNameEmptyException.class.getName(), LocalDateTime.now());
+        return btExceptionResolver.resolveBusinessBTException(ex, locale, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({LastNameEmptyException.class})
+    public ResponseEntity<BTExceptionResponse> handleLastNameEmptyException(LastNameEmptyException ex, Locale locale) {
+        log.info("[EXCEPTION] ({}) -> {}", LastNameEmptyException.class.getName(), LocalDateTime.now());
+        return btExceptionResolver.resolveBusinessBTException(ex, locale, HttpStatus.BAD_REQUEST);
+    }
+
 }

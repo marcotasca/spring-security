@@ -3,10 +3,7 @@ package com.bsf.security.service.auth;
 import com.bsf.security.event.auth.OnRegistrationCompletedEvent;
 import com.bsf.security.event.auth.OnRegistrationEvent;
 import com.bsf.security.exception._common.BTExceptionName;
-import com.bsf.security.exception.account.AccountNotFoundException;
-import com.bsf.security.exception.account.DuplicateAccountException;
-import com.bsf.security.exception.account.InvalidEmailAccountException;
-import com.bsf.security.exception.account.PasswordsDoNotMatchException;
+import com.bsf.security.exception.account.*;
 import com.bsf.security.exception.security.auth.AuthException;
 import com.bsf.security.exception.security.auth.VerifyTokenRegistrationException;
 import com.bsf.security.exception.security.jwt.InvalidJWTTokenException;
@@ -72,6 +69,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         PasswordConstraintValidator.isValid(request.getPassword());
         if (!request.getPassword().equals(request.getConfirmPassword()))
             throw new PasswordsDoNotMatchException(BTExceptionName.AUTH_REGISTRATION_PASSWORDS_DO_NOT_MATCH.name());
+
+        // Controllo che il nome non sia vuoto
+        if(request.getFirstname() == null || request.getFirstname().isEmpty())
+            throw new FirstNameEmptyException(BTExceptionName.FIRST_NAME_CAN_NOT_BE_EMPTY.name());
+
+        // Controllo che il cognome non sia vuoto
+        if(request.getLastname() == null || request.getLastname().isEmpty())
+            throw new LastNameEmptyException(BTExceptionName.LAST_NAME_CAN_NOT_BE_EMPTY.name());
 
         // Creo l'utente con ruolo di USER impostando tutti i campi necessari
         var user = Account
