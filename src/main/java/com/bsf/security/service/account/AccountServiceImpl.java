@@ -56,7 +56,7 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new AccountNotFoundException(BTExceptionName.ACCOUNT_NOT_FOUND.name()));
 
         // Controllo che l'email corrente sia giusta
-        if(passwordEncoder.matches(currentPassword, account.getPassword()))
+        if(!passwordEncoder.matches(currentPassword, account.getPassword()))
             throw new PasswordsDoNotMatchException(BTExceptionName.CURRENT_PASSWORD_DO_NOT_MATCH.name());
 
         // Controllo che la password soddisfi i requisiti minimi
