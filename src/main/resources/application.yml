@@ -45,6 +45,8 @@ application:
         expiration: 604800000 # 7 days
       registration-token:
         expiration: 864000000 # 10 days
+      reset-token:
+        expiration: 864000000 # 10 days
   authorizedRedirectUris:
     - http://localhost:3000/oauth2/redirect
   email:

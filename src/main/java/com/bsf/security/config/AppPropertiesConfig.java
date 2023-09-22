@@ -28,6 +28,7 @@ public class AppPropertiesConfig {
             private int expiration;
             private RefreshToken refreshToken = new RefreshToken();
             private RegistrationToken registrationToken = new RegistrationToken();
+            private ResetToken resetToken = new ResetToken();
 
             @Data
             public static class RefreshToken {
@@ -36,6 +37,11 @@ public class AppPropertiesConfig {
 
             @Data
             public static class RegistrationToken {
+                private int expiration;
+            }
+
+            @Data
+            public static class ResetToken {
                 private int expiration;
             }
 

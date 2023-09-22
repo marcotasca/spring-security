@@ -63,6 +63,17 @@ public class JwtService {
     }
 
     /**
+     * Genera il token per il reset dell'account.
+     *
+     * @param userDetails i dettagli dell'utente.
+     * @return la stringa contenente il token.
+     */
+    public String generateResetToken(UserDetails userDetails) {
+        int expirationTimeMillis = appPropertiesConfig.getSecurity().getJwt().getResetToken().getExpiration();
+        return buildToken(new HashMap<>(), userDetails, expirationTimeMillis);
+    }
+
+    /**
      * Genera il token solo con i dettagli dell'utente.
      *
      * @param userDetails i dettagli dell'utente.

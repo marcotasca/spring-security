@@ -4,7 +4,8 @@ import com.bsf.security.exception._common.BTException;
 import com.bsf.security.exception._common.BTExceptionResolver;
 import com.bsf.security.exception._common.BTExceptionResponse;
 import com.bsf.security.exception.security.auth.AuthException;
-import com.bsf.security.exception.security.auth.VerifyTokenRegistrationException;
+import com.bsf.security.exception.security.auth.VerifyResetTokenException;
+import com.bsf.security.exception.security.auth.VerifyRegistrationTokenException;
 import com.bsf.security.exception.security.jwt.InvalidJWTTokenException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +28,11 @@ public class SecurityErrorAdvice {
     BTExceptionResolver btExceptionResolver;
 
     @ExceptionHandler({
-            VerifyTokenRegistrationException.class, InvalidJWTTokenException.class
+            VerifyRegistrationTokenException.class,
+            InvalidJWTTokenException.class,
+            VerifyResetTokenException.class
     })
-    public ResponseEntity<Void> handleVerifyTokenRegistrationException(BTException ex, Locale locale) {
+    public ResponseEntity<Void> handleTokenException(BTException ex, Locale locale) {
         log.info("[EXCEPTION] ({}) -> {}", BTException.class.getName(), LocalDateTime.now());
         return ResponseEntity.badRequest().build();
     }

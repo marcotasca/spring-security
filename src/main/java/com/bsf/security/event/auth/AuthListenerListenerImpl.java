@@ -16,19 +16,13 @@ import java.time.LocalDateTime;
 
 @Slf4j
 @Component
-public class RegistrationListenerImpl implements RegistrationService {
+public class AuthListenerListenerImpl implements AuthListenerService {
 
     @Autowired
     private EmailService emailService;
 
     @Autowired
     private UtilService utilService;
-
-    @Value("${application.support.email}")
-    private String supportEmail;
-
-    @Value("${application.support.phone}")
-    private String supportPhone;
 
     @Value("${application.name}")
     private String applicationName;
@@ -57,15 +51,13 @@ public class RegistrationListenerImpl implements RegistrationService {
         String linkToVerify = clientDomain + "/auth/register/verify/" + event.getRegistrationToken();
         text = text
                 .replace("{{registration.name}}", event.getAccount().getFirstname())
-                .replace("{{registration.url}}", linkToVerify)
-                .replace("{{registration.support.phone}}", supportPhone)
-                .replace("{{registration.support.email}}", supportEmail);
+                .replace("{{registration.url}}", linkToVerify);
 
         emailService.sendSimpleMessage(
                 noReply,
                 applicationName,
                 event.getAccount().getEmail(),
-                "Confirm Your Registration",
+                "Confirm your registration",
                 text
         );
     }
@@ -96,6 +88,62 @@ public class RegistrationListenerImpl implements RegistrationService {
                 applicationName,
                 event.getAccount().getEmail(),
                 "Registration confirmed",
+                text
+        );
+    }
+
+    @Async
+    @Override
+    @EventListener
+    public void handleOnResetAccountEvent(OnResetAccountEvent event) {
+        log.info("[BTDoctor::ResetAccount] Account -> {}", event.getAccount());
+
+        String text = "";
+        try {
+            ClassPathResource resource = new ClassPathResource("/static/email/reset_password.html");
+            byte[] fileContent = StreamUtils.copyToByteArray(resource.getInputStream());
+            text = new String(fileContent, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.error("[BTDoctor::Error::handleOnResetAccountEvent] at {} -> {}", LocalDateTime.now(), e.getMessage());
+        }
+
+        String linkToVerify = clientDomain + "/auth/reset/verify/" + event.getResetToken();
+        text = text
+                .replace("{{reset.name}}", event.getAccount().getFirstname())
+                .replace("{{reset.url}}", linkToVerify);
+
+        emailService.sendSimpleMessage(
+                noReply,
+                applicationName,
+                event.getAccount().getEmail(),
+                "Password reset",
+                text
+        );
+    }
+
+    @Async
+    @Override
+    @EventListener
+    public void handleOnResetAccountCompletedEvent(OnResetAccountCompletedEvent event) {
+        log.info("[BTDoctor::RegistrationCompleted] Account -> {}", event.getAccount());
+
+        String text = "";
+        try {
+            ClassPathResource resource = new ClassPathResource("/static/email/reset_password_completed.html");
+            byte[] fileContent = StreamUtils.copyToByteArray(resource.getInputStream());
+            text = new String(fileContent, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.error("[BTDoctor::Error::handleOnResetAccountCompletedEvent] at {} -> {}", LocalDateTime.now(), e.getMessage());
+        }
+
+        text = text
+                .replace("{{registration.name}}", event.getAccount().getFirstname());
+
+        emailService.sendSimpleMessage(
+                noReply,
+                applicationName,
+                event.getAccount().getEmail(),
+                "Password reset completed",
                 text
         );
     }

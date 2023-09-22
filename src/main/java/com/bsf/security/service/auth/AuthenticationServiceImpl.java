@@ -2,10 +2,13 @@ package com.bsf.security.service.auth;
 
 import com.bsf.security.event.auth.OnRegistrationCompletedEvent;
 import com.bsf.security.event.auth.OnRegistrationEvent;
+import com.bsf.security.event.auth.OnResetAccountCompletedEvent;
+import com.bsf.security.event.auth.OnResetAccountEvent;
 import com.bsf.security.exception._common.BTExceptionName;
 import com.bsf.security.exception.account.*;
 import com.bsf.security.exception.security.auth.AuthException;
-import com.bsf.security.exception.security.auth.VerifyTokenRegistrationException;
+import com.bsf.security.exception.security.auth.VerifyResetTokenException;
+import com.bsf.security.exception.security.auth.VerifyRegistrationTokenException;
 import com.bsf.security.exception.security.jwt.InvalidJWTTokenException;
 import com.bsf.security.sec.auth.AuthenticationRequest;
 import com.bsf.security.sec.auth.AuthenticationResponse;
@@ -79,25 +82,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new LastNameEmptyException(BTExceptionName.LAST_NAME_CAN_NOT_BE_EMPTY.name());
 
         // Creo l'utente con ruolo di USER impostando tutti i campi necessari
-        var user = Account
+        var account = Account
                 .builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(new Role(RoleEnum.ADMIN.getRoleId()))
+                .role(new Role(RoleEnum.USER.getRoleId()))
                 .createdAt(LocalDateTime.now())
                 .status(new AccountStatus(AccountStatusEnum.Pending.getStatusId()))
                 .build();
 
         // Salvo l'utente appena creato
-        var savedAccount = accountService.save(user);
+        var savedAccount = accountService.save(account);
 
         // Salvo il provider collegato all'account
         providerService.addProviderToAccount(AuthProvider.LOCAL.getProviderId(), savedAccount.getId());
 
         // Creo un token per la verifica della registrazione
-        var accessToken = jwtService.generateRegistrationToken(user);
+        var accessToken = jwtService.generateRegistrationToken(account);
 
         // Salva il token dell'utente
         tokenService.saveUserToken(
@@ -115,12 +118,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public void verifyTokenRegistration(String registrationToken) {
+    public void verifyRegistrationToken(String registrationToken) {
         // Estraggo lo username dal token
         String username = jwtService.extractUsername(registrationToken);
 
         // Se lo username è nullo sollevo un'eccezione
-        if (username == null) throw new VerifyTokenRegistrationException();
+        if (username == null) throw new VerifyRegistrationTokenException();
 
         // Recupero l'utente dal database
         var account = accountService
@@ -128,7 +131,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .orElseThrow(() -> new AccountNotFoundException(BTExceptionName.ACCOUNT_NOT_FOUND.name()));
 
         // Controllo che il token sia valido altrimenti sollevo un'eccezione
-        if (!jwtService.isValidToken(registrationToken, account)) throw new VerifyTokenRegistrationException();
+        if (!jwtService.isValidToken(registrationToken, account)) throw new VerifyRegistrationTokenException();
 
         // Recupero il token in base all'account ID e allo scopo di registrazione
         Optional<Token> token = tokenService.findByAccountIdAndTokenScopeCategoryId(
@@ -137,7 +140,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Se il token è presente e uguale a quello che mi è arrivato
         if (token.isEmpty() || !token.get().getAccessToken().equals(registrationToken))
-            throw new VerifyTokenRegistrationException();
+            throw new VerifyRegistrationTokenException();
 
         // Abilito l'account
         account.setStatus(new AccountStatus(AccountStatusEnum.Enabled.getStatusId()));
@@ -153,6 +156,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request, String ipAddress) {
+        // TODO: Togli il ritardo
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
@@ -276,6 +280,73 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .refreshToken(token.getRefreshToken())
                 .refreshTokenExpirationDate(token.getAccessTokenExpiration())
                 .build();
+
+    }
+
+    @Override
+    public void resetPassword(String email, String ipAddress, String appUrl) {
+        Optional<Account> account = accountService.findByEmail(email);
+
+        // Se non esiste l'account non solleviamo un'eccezione
+        // per evitare che si sappia quale email esistono nel sistema
+        if(account.isPresent() && account.get().isEnabled()) {
+
+            System.out.println("Enabled");
+
+            // Creo un token per il reset
+            var accessToken = jwtService.generateResetToken(account.get());
+
+            // Salva il token dell'utente
+            tokenService.saveUserToken(
+                    account.get(),
+                    accessToken,
+                    null,
+                    ipAddress,
+                    TokenTypeEnum.BEARER,
+                    TokenScopeCategoryEnum.BTD_RESET
+            );
+
+            // Invio un evento quando viene completato il reset
+            eventPublisher.publishEvent(new OnResetAccountEvent(this, account.get(), accessToken, appUrl));
+
+        }
+
+    }
+
+    @Override
+    public void verifyResetToken(String resetToken) {
+        // Estraggo lo username dal token
+        String username = jwtService.extractUsername(resetToken);
+
+        // Se lo username è nullo sollevo un'eccezione
+        if (username == null) throw new VerifyResetTokenException();
+
+        // Recupero l'utente dal database
+        var account = accountService
+                .findByEmail(username)
+                .orElseThrow(() -> new AccountNotFoundException(BTExceptionName.ACCOUNT_NOT_FOUND.name()));
+
+        // Controllo che il token sia valido altrimenti sollevo un'eccezione
+        if (!jwtService.isValidToken(resetToken, account)) throw new VerifyResetTokenException();
+
+        // Recupero il token in base all'account ID e allo scopo di registrazione
+        Optional<Token> token = tokenService.findByAccountIdAndTokenScopeCategoryId(
+                account.getId(), TokenScopeCategoryEnum.BTD_RESET.getTokenScopeCategoryId()
+        );
+
+        // Se il token è presente e uguale a quello che mi è arrivato
+        if (token.isEmpty() || !token.get().getAccessToken().equals(resetToken))
+            throw new VerifyRegistrationTokenException();
+
+        // Abilito l'account
+        account.setStatus(new AccountStatus(AccountStatusEnum.Enabled.getStatusId()));
+        accountService.save(account);
+
+        // Elimino il token di registrazione
+        tokenService.delete(token.get());
+
+        // Invio un evento quando viene confermata la registrazione
+        eventPublisher.publishEvent(new OnResetAccountCompletedEvent(this, account));
 
     }
 
