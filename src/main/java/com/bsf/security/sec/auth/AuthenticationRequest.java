@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
+// TODO: Converti in record
+
 @Data
 @Builder
 @AllArgsConstructor

@@ -12,6 +12,7 @@ import com.bsf.security.exception.security.auth.VerifyRegistrationTokenException
 import com.bsf.security.exception.security.jwt.InvalidJWTTokenException;
 import com.bsf.security.sec.auth.AuthenticationRequest;
 import com.bsf.security.sec.auth.AuthenticationResponse;
+import com.bsf.security.sec.auth.PasswordResetRequest;
 import com.bsf.security.sec.auth.RegisterRequest;
 import com.bsf.security.sec.config.JwtService;
 import com.bsf.security.sec.model.account.*;
@@ -71,7 +72,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Controllo che la password soddisfi i requisiti minimi
         PasswordConstraintValidator.isValid(request.getPassword());
         if (!request.getPassword().equals(request.getConfirmPassword()))
-            throw new PasswordsDoNotMatchException(BTExceptionName.AUTH_REGISTRATION_PASSWORDS_DO_NOT_MATCH.name());
+            throw new PasswordsDoNotMatchException(BTExceptionName.AUTH_PASSWORDS_DO_NOT_MATCH.name());
 
         // Controllo che il nome non sia vuoto
         if(request.getFirstname() == null || request.getFirstname().isEmpty())
@@ -289,9 +290,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Se non esiste l'account non solleviamo un'eccezione
         // per evitare che si sappia quale email esistono nel sistema
-        if(account.isPresent() && account.get().isEnabled()) {
-
-            System.out.println("Enabled");
+        // Non controlliamo che sia abilitato per far si che possa attivarsi
+        // se non ha completato la registrazione
+        if(account.isPresent()) {
 
             // Creo un token per il reset
             var accessToken = jwtService.generateResetToken(account.get());
@@ -314,7 +315,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public void verifyResetToken(String resetToken) {
+    public void verifyResetToken(String resetToken, PasswordResetRequest request) {
         // Estraggo lo username dal token
         String username = jwtService.extractUsername(resetToken);
 
@@ -329,7 +330,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         // Controllo che il token sia valido altrimenti sollevo un'eccezione
         if (!jwtService.isValidToken(resetToken, account)) throw new VerifyResetTokenException();
 
-        // Recupero il token in base all'account ID e allo scopo di registrazione
+        // Recupero il token in base all'account ID e allo scopo di reset
         Optional<Token> token = tokenService.findByAccountIdAndTokenScopeCategoryId(
                 account.getId(), TokenScopeCategoryEnum.BTD_RESET.getTokenScopeCategoryId()
         );
@@ -338,14 +339,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (token.isEmpty() || !token.get().getAccessToken().equals(resetToken))
             throw new VerifyRegistrationTokenException();
 
-        // Abilito l'account
-        account.setStatus(new AccountStatus(AccountStatusEnum.Enabled.getStatusId()));
+        // Modifico la password
+        PasswordConstraintValidator.isValid(request.password());
+        if (!request.password().equals(request.confirmPassword()))
+            throw new PasswordsDoNotMatchException(BTExceptionName.AUTH_PASSWORDS_DO_NOT_MATCH.name());
+
+        account.setPassword(passwordEncoder.encode(request.password()));
+
+        // Abilito l'account se non è abilitato
+        if(account.getStatus().getId() == AccountStatusEnum.Pending.getStatusId()) {
+            account.setStatus(new AccountStatus(AccountStatusEnum.Enabled.getStatusId()));
+        }
+
+        // Salvo l'account
         accountService.save(account);
 
-        // Elimino il token di registrazione
+        // Elimino il token di reset
         tokenService.delete(token.get());
 
-        // Invio un evento quando viene confermata la registrazione
+        // Invio un evento quando viene resettata la password
         eventPublisher.publishEvent(new OnResetAccountCompletedEvent(this, account));
 
     }

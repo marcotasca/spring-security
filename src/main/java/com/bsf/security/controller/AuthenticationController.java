@@ -2,6 +2,7 @@ package com.bsf.security.controller;
 
 import com.bsf.security.sec.auth.AuthenticationRequest;
 import com.bsf.security.sec.auth.AuthenticationResponse;
+import com.bsf.security.sec.auth.PasswordResetRequest;
 import com.bsf.security.service.auth.AuthenticationServiceImpl;
 import com.bsf.security.sec.auth.RegisterRequest;
 import com.bsf.security.util.UtilService;
@@ -69,6 +70,7 @@ public class AuthenticationController {
 
     @GetMapping("/reset/verify/{token}")
     public ResponseEntity<Void> verifyResetToken(
+            @RequestBody PasswordResetRequest request,
             @PathVariable("token") String token
     ) {
         // TODO: Togli il ritardo
@@ -77,7 +79,7 @@ public class AuthenticationController {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        authenticationServiceImpl.verifyResetToken(token);
+        authenticationServiceImpl.verifyResetToken(token, request);
         return ResponseEntity.noContent().build();
     }
 

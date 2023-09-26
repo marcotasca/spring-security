@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
+
+// TODO: Converti in record
+
 @Data
 @Builder
 @AllArgsConstructor

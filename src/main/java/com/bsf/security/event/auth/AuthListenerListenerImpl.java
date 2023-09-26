@@ -107,7 +107,7 @@ public class AuthListenerListenerImpl implements AuthListenerService {
             log.error("[BTDoctor::Error::handleOnResetAccountEvent] at {} -> {}", LocalDateTime.now(), e.getMessage());
         }
 
-        String linkToVerify = clientDomain + "/auth/reset/verify/" + event.getResetToken();
+        String linkToVerify = clientDomain + "/auth/reset/" + event.getResetToken();
         text = text
                 .replace("{{reset.name}}", event.getAccount().getFirstname())
                 .replace("{{reset.url}}", linkToVerify);

@@ -57,12 +57,12 @@ public class AccountServiceImpl implements AccountService {
 
         // Controllo che l'email corrente sia giusta
         if(!passwordEncoder.matches(currentPassword, account.getPassword()))
-            throw new PasswordsDoNotMatchException(BTExceptionName.CURRENT_PASSWORD_DO_NOT_MATCH.name());
+            throw new PasswordsDoNotMatchException(BTExceptionName.CURRENT_PASSWORD_DOES_NOT_MATCH.name());
 
         // Controllo che la password soddisfi i requisiti minimi
         PasswordConstraintValidator.isValid(password);
         if (!password.equals(confirmPassword))
-            throw new PasswordsDoNotMatchException(BTExceptionName.AUTH_REGISTRATION_PASSWORDS_DO_NOT_MATCH.name());
+            throw new PasswordsDoNotMatchException(BTExceptionName.AUTH_PASSWORDS_DO_NOT_MATCH.name());
 
         account.setPassword(passwordEncoder.encode(password));
         save(account);
