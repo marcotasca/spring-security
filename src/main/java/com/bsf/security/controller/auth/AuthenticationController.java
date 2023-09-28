@@ -1,8 +1,9 @@
-package com.bsf.security.controller;
+package com.bsf.security.controller.auth;
 
 import com.bsf.security.sec.auth.AuthenticationRequest;
 import com.bsf.security.sec.auth.AuthenticationResponse;
 import com.bsf.security.sec.auth.PasswordResetRequest;
+import com.bsf.security.sec.model.token.TokenScopeCategoryEnum;
 import com.bsf.security.service.auth.AuthenticationServiceImpl;
 import com.bsf.security.sec.auth.RegisterRequest;
 import com.bsf.security.util.UtilService;
@@ -36,7 +37,7 @@ public class AuthenticationController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/register/verify/{token}")
+    @GetMapping("/register-verify/{token}")
     public ResponseEntity<Void> verifyRegistrationToken(
             @PathVariable("token") String token
     ) {
@@ -54,33 +55,18 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody AuthenticationRequest request, HttpServletRequest httpRequest
     ) {
-        return ResponseEntity.ok(authenticationServiceImpl.authenticate(request, utilService.getClientIP(httpRequest)));
-    }
-
-    @PostMapping("/refresh-token")
-    public ResponseEntity<AuthenticationResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) {
-        return ResponseEntity.ok(authenticationServiceImpl.refreshToken(request, response));
-    }
-
-    @PostMapping("/reset/{email}")
-    public ResponseEntity<Void> resetPassword(@PathVariable("email") String email, HttpServletRequest httpRequest) {
-        authenticationServiceImpl.resetPassword(email, utilService.getClientIP(httpRequest), utilService.getAppUrl(httpRequest));
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/reset/verify/{token}")
-    public ResponseEntity<Void> verifyResetToken(
-            @RequestBody PasswordResetRequest request,
-            @PathVariable("token") String token
-    ) {
         // TODO: Togli il ritardo
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        authenticationServiceImpl.verifyResetToken(token, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(authenticationServiceImpl.authenticate(request, utilService.getClientIP(httpRequest)));
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthenticationResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        return ResponseEntity.ok(authenticationServiceImpl.refreshToken(request, response));
     }
 
 }

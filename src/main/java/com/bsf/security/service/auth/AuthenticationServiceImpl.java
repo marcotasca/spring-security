@@ -7,6 +7,7 @@ import com.bsf.security.event.auth.OnResetAccountEvent;
 import com.bsf.security.exception._common.BTExceptionName;
 import com.bsf.security.exception.account.*;
 import com.bsf.security.exception.security.auth.AuthException;
+import com.bsf.security.exception.security.auth.TokenException;
 import com.bsf.security.exception.security.auth.VerifyResetTokenException;
 import com.bsf.security.exception.security.auth.VerifyRegistrationTokenException;
 import com.bsf.security.exception.security.jwt.InvalidJWTTokenException;
@@ -157,13 +158,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request, String ipAddress) {
-        // TODO: Togli il ritardo
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
         // Controllo che l'email e la password non siano vuoti
         if (request.getEmail() == null) throw new AuthException(BTExceptionName.EMAIL_CAN_NOT_BE_EMPTY.name());
         if (request.getPassword() == null) throw new AuthException(BTExceptionName.PASSWORD_CAN_NOT_BE_EMPTY.name());
@@ -285,7 +279,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public void resetPassword(String email, String ipAddress, String appUrl) {
+    public void sendResetPassword(String email, String ipAddress, String appUrl) {
         Optional<Account> account = accountService.findByEmail(email);
 
         // Se non esiste l'account non solleviamo un'eccezione
@@ -315,7 +309,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public void verifyResetToken(String resetToken, PasswordResetRequest request) {
+    public AuthenticationResponse resetPassword(String resetToken, PasswordResetRequest request, String ipAddress) {
         // Estraggo lo username dal token
         String username = jwtService.extractUsername(resetToken);
 
@@ -331,12 +325,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (!jwtService.isValidToken(resetToken, account)) throw new VerifyResetTokenException();
 
         // Recupero il token in base all'account ID e allo scopo di reset
-        Optional<Token> token = tokenService.findByAccountIdAndTokenScopeCategoryId(
+        Optional<Token> tokenReset = tokenService.findByAccountIdAndTokenScopeCategoryId(
                 account.getId(), TokenScopeCategoryEnum.BTD_RESET.getTokenScopeCategoryId()
         );
 
         // Se il token è presente e uguale a quello che mi è arrivato
-        if (token.isEmpty() || !token.get().getAccessToken().equals(resetToken))
+        if (tokenReset.isEmpty() || !tokenReset.get().getAccessToken().equals(resetToken))
             throw new VerifyRegistrationTokenException();
 
         // Modifico la password
@@ -355,11 +349,66 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         accountService.save(account);
 
         // Elimino il token di reset
-        tokenService.delete(token.get());
+        tokenService.delete(tokenReset.get());
 
         // Invio un evento quando viene resettata la password
         eventPublisher.publishEvent(new OnResetAccountCompletedEvent(this, account));
 
+        // Creo un token con i dati dell'utente
+        var accessToken = jwtService.generateToken(account);
+
+        // Creo il token di refresh
+        var refreshToken = jwtService.generateRefreshToken(account);
+
+        // Revoca tutti i token dello user
+        tokenService.revokeAllAccountTokens(account);
+
+        // Salvo il token dell'utente
+        var token = tokenService.saveUserToken(
+                account,
+                accessToken,
+                refreshToken,
+                ipAddress,
+                TokenTypeEnum.BEARER,
+                TokenScopeCategoryEnum.BTD_RW
+        );
+
+        // Creo la risposta da inviare
+        return AuthenticationResponse
+                .builder()
+                .accessToken(token.getAccessToken())
+                .accessTokenExpirationDate(token.getAccessTokenExpiration())
+                .refreshToken(token.getRefreshToken())
+                .refreshTokenExpirationDate(token.getAccessTokenExpiration())
+                .build();
+    }
+
+    @Override
+    public Account getAccountAndVerifyToken(String token, int tokenScopeCategoryId) {
+        // Estraggo lo username dal token
+        String username = jwtService.extractUsername(token);
+
+        // Se lo username è nullo sollevo un'eccezione
+        if (username == null) throw new TokenException();
+
+        // Recupero l'utente dal database
+        var account = accountService
+                .findByEmail(username)
+                .orElseThrow(() -> new AccountNotFoundException(BTExceptionName.ACCOUNT_NOT_FOUND.name()));
+
+        // Controllo che il token sia valido altrimenti sollevo un'eccezione
+        if (!jwtService.isValidToken(token, account)) throw new TokenException();
+
+        // Recupero il token in base all'account ID e allo scopo di reset
+        Optional<Token> optionalToken = tokenService.findByAccountIdAndTokenScopeCategoryId(
+                account.getId(), tokenScopeCategoryId
+        );
+
+        // Se il token è presente e uguale a quello che mi è arrivato
+        if (optionalToken.isEmpty() || !optionalToken.get().getAccessToken().equals(token))
+            throw new TokenException();
+
+        return account;
     }
 
 }

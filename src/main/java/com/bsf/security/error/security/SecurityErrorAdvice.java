@@ -4,6 +4,7 @@ import com.bsf.security.exception._common.BTException;
 import com.bsf.security.exception._common.BTExceptionResolver;
 import com.bsf.security.exception._common.BTExceptionResponse;
 import com.bsf.security.exception.security.auth.AuthException;
+import com.bsf.security.exception.security.auth.TokenException;
 import com.bsf.security.exception.security.auth.VerifyResetTokenException;
 import com.bsf.security.exception.security.auth.VerifyRegistrationTokenException;
 import com.bsf.security.exception.security.jwt.InvalidJWTTokenException;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.naming.AuthenticationException;
 import java.time.LocalDateTime;
@@ -30,11 +32,12 @@ public class SecurityErrorAdvice {
     @ExceptionHandler({
             VerifyRegistrationTokenException.class,
             InvalidJWTTokenException.class,
-            VerifyResetTokenException.class
+            VerifyResetTokenException.class,
+            TokenException.class
     })
     public ResponseEntity<Void> handleTokenException(BTException ex, Locale locale) {
         log.info("[EXCEPTION] ({}) -> {}", BTException.class.getName(), LocalDateTime.now());
-        return ResponseEntity.badRequest().build();
+        return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler({AuthException.class})

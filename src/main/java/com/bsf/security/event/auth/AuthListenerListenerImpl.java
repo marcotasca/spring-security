@@ -125,7 +125,7 @@ public class AuthListenerListenerImpl implements AuthListenerService {
     @Override
     @EventListener
     public void handleOnResetAccountCompletedEvent(OnResetAccountCompletedEvent event) {
-        log.info("[BTDoctor::RegistrationCompleted] Account -> {}", event.getAccount());
+        log.info("[BTDoctor::ResetAccountCompleted] Account -> {}", event.getAccount());
 
         String text = "";
         try {
@@ -137,7 +137,7 @@ public class AuthListenerListenerImpl implements AuthListenerService {
         }
 
         text = text
-                .replace("{{registration.name}}", event.getAccount().getFirstname());
+                .replace("{{reset.username}}", event.getAccount().getEmail());
 
         emailService.sendSimpleMessage(
                 noReply,
