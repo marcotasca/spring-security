@@ -1,28 +1,14 @@
-https://start.spring.io/
+# Spring Security User Registration and Authentication
 
-https://auth0.com/docs/secure/tokens/json-web-tokens
+This project is an implementation of a user registration and authentication system using Spring Boot 3.1.0 and Java 17. It provides features such as user registration, login via JWT and OAuth2 with Google, token refresh, email confirmation, password recovery, comprehensive error handling, and role-based access control.
 
-https://jwt.io/
+## Key Features
 
-OneToMany: LAZY<br>
-ManyToOne: EAGER<br>
-ManyToMany: LAZY<br>
-OneToOne: EAGER<br>
-
-OAuth Google Security Flow:
-
-BASE_URI + /oauth2/authorize/ + [provider] ? redirect_uri= REDIRECT_URI <br>
-http://localhost:8080/oauth2/authorize/google?redirect_uri=http://localhost:3000/oauth2/redirect
-
-BASE_URI + /oauth2/callback/ + [provider] <br>
-http://localhost:8080/oauth2/callback/google
-
-Quando viene chiamata la callback viene chiamata il success handler <br>
-Nella richiesta vengono applicati i cookie <br>
-- request_uri
-
-
-BASE_URI + /oauth2/redirect/ ? token= TOKEN <br>
-http://localhost:3000/oauth2/redirect?token=TOKEN_ID
-
-https://github.com/The-Tech-Tutor/spring-react-login
+- **User Registration**: Create an account with ease.
+- **JWT Authentication**: Authenticate using JSON Web Tokens.
+- **OAuth2 Integration**: Log in with Google via OAuth2.
+- **Token Refresh**: Refresh authentication tokens for extended sessions.
+- **Email Confirmation**: Receive confirmation emails upon registration.
+- **Password Recovery**: Reset your password when needed.
+- **Robust Error Handling**: Comprehensive error management.
+- **Role-Based Access Control**: Manage permissions based on user roles.
